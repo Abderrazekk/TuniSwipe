@@ -46,7 +46,6 @@ const getPotentialMatches = async (req, res) => {
     } else if (currentUser.gender === "female") {
       targetGender = "male";
     } else {
-      // If gender is 'other', show all genders (or adjust as needed)
       targetGender = { $in: ["male", "female"] };
     }
 
@@ -54,12 +53,12 @@ const getPotentialMatches = async (req, res) => {
       `${colors.blue}🎯 Looking for ${targetGender} profiles${colors.reset}`
     );
 
-    // Build query with gender filter
+    // Build base query
     const query = {
       _id: { $nin: swipedUserIds },
     };
 
-    // Add gender filter only if targetGender is defined
+    // Add gender filter
     if (targetGender) {
       if (typeof targetGender === "string") {
         query.gender = targetGender;
@@ -68,7 +67,31 @@ const getPotentialMatches = async (req, res) => {
       }
     }
 
-    // Get users who are not swiped, not current user, and match target gender
+    // ADD LOCATION FILTERING
+    if (currentUser.location && currentUser.locationEnabled) {
+      const maxDistance = currentUser.maxDistance || 50; // Default to 50KM if not set
+
+      query.location = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: currentUser.location.coordinates,
+          },
+          $maxDistance: maxDistance * 1000, // Convert KM to meters
+        },
+      };
+      query.locationEnabled = true;
+
+      console.log(
+        `${colors.blue}📍 Filtering by location: ${maxDistance} KM radius${colors.reset}`
+      );
+    } else {
+      console.log(
+        `${colors.yellow}⚠️ Location filtering disabled or no location set${colors.reset}`
+      );
+    }
+
+    // Get users who are not swiped, not current user, match target gender, and within distance
     const potentialMatches = await User.find(query)
       .select("-password")
       .limit(20);
@@ -77,20 +100,42 @@ const getPotentialMatches = async (req, res) => {
       `${colors.green}✅ Found ${potentialMatches.length} potential matches${colors.reset}`
     );
 
-    // Add main photo from media or use profile photo
-    const matchesWithPhotos = potentialMatches.map((user) => {
-      const userObj = user.toObject();
-      // Use first media item as main photo if available, otherwise use profile photo
-      userObj.mainPhoto =
-        user.media && user.media.length > 0
-          ? user.media[0].filename
-          : user.photo;
-      return userObj;
+    // Calculate distance for each match and add to response
+    const matchesWithLocation = await Promise.all(
+      potentialMatches.map(async (user) => {
+        const userObj = user.toObject();
+
+        // Use first media item as main photo if available
+        userObj.mainPhoto =
+          user.media && user.media.length > 0
+            ? user.media[0].filename
+            : user.photo;
+
+        // Calculate distance if both users have locations
+        if (currentUser.location && user.location) {
+          userObj.distance = calculateDistance(
+            currentUser.location.coordinates[1], // lat
+            currentUser.location.coordinates[0], // lng
+            user.location.coordinates[1], // lat
+            user.location.coordinates[0] // lng
+          );
+        }
+
+        return userObj;
+      })
+    );
+
+    // Sort by distance (closest first)
+    matchesWithLocation.sort((a, b) => {
+      if (a.distance && b.distance) {
+        return a.distance - b.distance;
+      }
+      return 0;
     });
 
     res.json({
       success: true,
-      data: matchesWithPhotos,
+      data: matchesWithLocation,
       message: "Potential matches retrieved successfully",
     });
   } catch (error) {
@@ -103,6 +148,24 @@ const getPotentialMatches = async (req, res) => {
       message: "Error retrieving potential matches",
     });
   }
+};
+
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ */
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in KM
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  return Math.round(distance * 10) / 10; // Round to 1 decimal place
 };
 
 /**

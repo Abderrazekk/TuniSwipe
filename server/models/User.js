@@ -91,11 +91,38 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0], // [longitude, latitude]
+      },
+    },
+    locationEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    maxDistance: {
+      type: Number,
+      default: 50, // Default radius in KM
+    },
+    lastLocationUpdate: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Create a 2dsphere index for geospatial queries
+userSchema.index({ location: "2dsphere" });
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {

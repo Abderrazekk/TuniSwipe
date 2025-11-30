@@ -13,6 +13,11 @@ const {
   removeUserMedia,
   getUserMedia,
 } = require("../controllers/authController");
+const {
+  updateUserLocation,
+  getNearbyUsers,
+  getUserLocationSettings,
+} = require("../controllers/locationController");
 
 const router = express.Router();
 
@@ -30,6 +35,11 @@ router.put("/profile", authenticate, handleUpload, updateUserProfile);
 router.get("/media", authenticate, getUserMedia);
 router.post("/media", authenticate, handleMediaUpload, addUserMedia);
 router.delete("/media/:filename", authenticate, removeUserMedia);
+
+// Location routes
+router.put("/location", authenticate, updateUserLocation);
+router.get("/location/nearby", authenticate, getNearbyUsers);
+router.get("/location/settings", authenticate, getUserLocationSettings);
 
 // Admin routes
 router.get("/admin/stats", authenticate, authorizeAdmin, getAdminStats);

@@ -16,7 +16,18 @@ const colors = {
  * User Signup Controller
  */
 const userSignup = async (req, res) => {
-  const { name, email, password, bio, gender, interests, age } = req.body;
+  const {
+    name,
+    email,
+    password,
+    bio,
+    gender,
+    interests,
+    age,
+    latitude,
+    longitude,
+    maxDistance,
+  } = req.body;
 
   console.log(`${colors.blue}👤 User signup attempt: ${email}${colors.reset}`);
 
@@ -83,6 +94,19 @@ const userSignup = async (req, res) => {
       `${colors.yellow}📝 Creating new user: ${email}${colors.reset}`
     );
 
+    // Handle location data
+    let locationData = {};
+    if (latitude && longitude) {
+      locationData = {
+        location: {
+          type: "Point",
+          coordinates: [parseFloat(longitude), parseFloat(latitude)],
+        },
+        locationEnabled: true,
+        maxDistance: maxDistance || 50,
+      };
+    }
+
     // CREATE USER WITHOUT THE NEW FIELDS - THEY WILL BE EMPTY BY DEFAULT
     const user = await User.create({
       name,
@@ -93,6 +117,7 @@ const userSignup = async (req, res) => {
       interests: interestsArray,
       age: userAge,
       photo: photoPath,
+      ...locationData,
       // REMOVED: school, height, jobTitle, livingIn, topArtist, company
     });
 

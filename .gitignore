@@ -1,0 +1,26 @@
+# ========================
+# Node.js (server)
+# ========================
+server/node_modules/
+server/.env
+server/npm-debug.log
+server/dist/
+
+# ========================
+# Flutter (frontend)
+# ========================
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub/
+frontend/.vscode/
+frontend/ios/Pods/
+frontend/Pods/
+frontend/android/.gradle
+frontend/android/app/build/
+
+# ========================
+# Global ignores
+# ========================
+.DS_Store
+*.log

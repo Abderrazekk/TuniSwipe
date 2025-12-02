@@ -40,6 +40,29 @@ class User {
     this.distance,
   });
 
+  // NEW: Get all image URLs (profile + media)
+  List<String> get allImageUrls {
+    final baseUrl = 'http://10.0.2.2:5000/uploads/';
+    final urls = <String>[];
+    
+    // Add profile image first
+    if (photo.isNotEmpty) {
+      urls.add('$baseUrl$photo');
+    }
+    
+    // Add media images
+    for (final mediaItem in media) {
+      if (mediaItem.filename.isNotEmpty) {
+        urls.add('$baseUrl${mediaItem.filename}');
+      }
+    }
+    
+    return urls;
+  }
+
+  // NEW: Get total number of images
+  int get totalImages => allImageUrls.length;
+
   factory User.fromJson(Map<String, dynamic> json) {
     print('👤 Creating User object from JSON');
 
@@ -195,6 +218,13 @@ class User {
   }
 
   factory User.fromProfileJson(Map<String, dynamic> json) {
+    List<UserMedia> parsedMedia = [];
+    if (json['media'] != null && json['media'] is List) {
+      parsedMedia = (json['media'] as List).map((mediaJson) {
+        return UserMedia.fromJson(mediaJson);
+      }).toList();
+    }
+
     return User(
       id: json['_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -208,7 +238,7 @@ class User {
       age: json['age'] is int
           ? json['age']
           : int.tryParse(json['age']?.toString() ?? '') ?? 0,
-      media: [],
+      media: parsedMedia,
       school: json['school']?.toString() ?? '',
       height: json['height'] is int
           ? json['height']
@@ -223,8 +253,10 @@ class User {
     );
   }
 
+  // FIXED: Updated fromMatchJson to parse media correctly
   factory User.fromMatchJson(Map<String, dynamic> json) {
     print('👤 Creating User from match JSON');
+    print('📸 Media field in JSON: ${json['media']}');
 
     int parsedAge = 0;
     if (json['age'] != null) {
@@ -260,6 +292,20 @@ class User {
       }
     }
 
+    // FIX: Parse media array from JSON
+    List<UserMedia> parsedMedia = [];
+    if (json['media'] != null && json['media'] is List) {
+      print('📸 Parsing media array with ${json['media'].length} items');
+      try {
+        parsedMedia = (json['media'] as List).map((mediaJson) {
+          return UserMedia.fromJson(mediaJson);
+        }).toList();
+      } catch (e) {
+        print('❌ Error parsing media: $e');
+        parsedMedia = [];
+      }
+    }
+
     double? parsedDistance;
     if (json['distance'] != null) {
       if (json['distance'] is double) {
@@ -271,6 +317,19 @@ class User {
       }
     }
 
+    // Get the main photo (profile photo)
+    String profilePhoto = '';
+    if (json['photo'] != null && json['photo'].toString().isNotEmpty) {
+      profilePhoto = json['photo'].toString();
+    } else if (json['mainPhoto'] != null && json['mainPhoto'].toString().isNotEmpty) {
+      profilePhoto = json['mainPhoto'].toString();
+    }
+
+    print('✅ Created user with:');
+    print('   Name: ${json['name']}');
+    print('   Profile Photo: $profilePhoto');
+    print('   Media count: ${parsedMedia.length}');
+
     return User(
       id: json['_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -280,9 +339,9 @@ class User {
       bio: json['bio']?.toString() ?? '',
       gender: json['gender']?.toString() ?? '',
       interests: parsedInterests,
-      photo: (json['mainPhoto']?.toString() ?? json['photo']?.toString()) ?? '',
+      photo: profilePhoto,
       age: parsedAge,
-      media: [],
+      media: parsedMedia, // This was previously empty, now contains media
       school: json['school']?.toString() ?? '',
       height: parsedHeight,
       jobTitle: json['jobTitle']?.toString() ?? '',

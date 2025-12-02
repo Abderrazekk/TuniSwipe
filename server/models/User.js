@@ -90,7 +90,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    // Enhanced location fields
     location: {
       type: {
         type: String,
@@ -146,6 +145,54 @@ userSchema.pre("save", async function (next) {
 // Method to compare password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// NEW: Get all images for swipe cards (profile + media)
+userSchema.methods.getAllImages = function() {
+  const images = [];
+  
+  // Add profile photo first if exists
+  if (this.photo && this.photo.trim() !== '') {
+    images.push({
+      type: 'profile',
+      filename: this.photo,
+      originalName: 'Profile Photo',
+      uploadDate: this.updatedAt
+    });
+  }
+  
+  // Add media images
+  if (this.media && this.media.length > 0) {
+    images.push(...this.media.map(media => ({
+      type: 'media',
+      ...media.toObject()
+    })));
+  }
+  
+  return images;
+};
+
+// Get user data optimized for swipe cards
+userSchema.methods.getSwipeCardData = function() {
+  return {
+    _id: this._id,
+    name: this.name,
+    age: this.age,
+    bio: this.bio,
+    gender: this.gender,
+    interests: this.interests,
+    photo: this.photo,
+    media: this.media,
+    school: this.school,
+    height: this.height,
+    jobTitle: this.jobTitle,
+    livingIn: this.livingIn,
+    topArtist: this.topArtist,
+    company: this.company,
+    locationEnabled: this.locationEnabled,
+    locationRadius: this.locationRadius,
+    totalImages: this.getAllImages().length
+  };
 };
 
 // Remove password from JSON output

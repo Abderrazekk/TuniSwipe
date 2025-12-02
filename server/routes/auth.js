@@ -13,6 +13,8 @@ const {
   addUserMedia,
   removeUserMedia,
   getUserMedia,
+  getUserForSwipeCard, // NEW
+  getPotentialMatchesWithImages, // NEW
 } = require("../controllers/authController");
 const {
   updateUserLocation,
@@ -39,6 +41,10 @@ router.get("/media", authenticate, getUserMedia);
 router.post("/media", authenticate, handleMediaUpload, addUserMedia);
 router.delete("/media/:filename", authenticate, removeUserMedia);
 
+// NEW: Swipe card routes
+router.get("/user/swipe/:userId", authenticate, getUserForSwipeCard);
+router.get("/matches/potential-with-images", authenticate, getPotentialMatchesWithImages);
+
 // Location routes
 router.put("/location", authenticate, updateUserLocation);
 router.put("/location/radius", authenticate, updateLocationRadius);
@@ -57,7 +63,7 @@ router.use("/matches", matchRoutes);
 const chatRoutes = require("./chat");
 router.use("/chat", chatRoutes);
 
-// Add this to routes/auth.js or routes/chat.js
+// Debug route
 router.get("/debug/matches", authenticate, async (req, res) => {
   try {
     const currentUserId = req.user._id;

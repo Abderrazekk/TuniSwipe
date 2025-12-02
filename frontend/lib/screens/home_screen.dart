@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentRadius = 50;
   bool _locationEnabled = true;
   final LocationService _locationService = LocationService();
+  bool _showNavigationGuide = true;
 
   final List<Widget> _screens = [
     const HomeTab(),
@@ -42,15 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadLocationSettings();
     _loadPotentialMatches();
+    _hideNavigationGuide();
   }
 
   Future<void> _loadLocationSettings() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.user?.token;
-    
+
     if (token != null) {
       final settings = await _locationService.getLocationSettings(token);
-      
+
       if (settings != null) {
         setState(() {
           _currentRadius = settings['locationRadius'] ?? 50;
@@ -281,20 +283,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _updateRadius(int newRadius) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.user?.token;
-    
+
     if (token != null) {
       final success = await _locationService.updateLocationRadius(
         token: token,
         radius: newRadius,
       );
-      
+
       if (success) {
         setState(() {
           _currentRadius = newRadius;
         });
-        
+
         _loadPotentialMatches();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Search radius updated to $newRadius KM'),
@@ -308,20 +310,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _toggleLocationEnabled(bool enabled) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.user?.token;
-    
+
     if (token != null) {
       final success = await _locationService.toggleLocationEnabled(
         token: token,
         enabled: enabled,
       );
-      
+
       if (success) {
         setState(() {
           _locationEnabled = enabled;
         });
-        
+
         _loadPotentialMatches();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Location ${enabled ? 'enabled' : 'disabled'}'),
@@ -347,10 +349,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _refreshLocationAndMatches() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final token = authProvider.user?.token;
-    
+
     if (token != null) {
       final location = await _locationService.getCurrentLocation();
-      
+
       if (location != null) {
         await _locationService.sendLocationToBackend(
           token: token,
@@ -359,9 +361,9 @@ class _HomeScreenState extends State<HomeScreen> {
           accuracy: location.accuracy,
           forceUpdate: true,
         );
-        
+
         _loadPotentialMatches();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Location updated - Refreshing matches'),
@@ -388,23 +390,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _hideNavigationGuide() {
+    Future.delayed(Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _showNavigationGuide = false;
+        });
+      }
+    });
+  }
+
+  void _showProfileDetail(User user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfileDetailScreen(user: user),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _currentIndex == 0 
+      appBar: _currentIndex == 0
           ? AppBar(
               title: Row(
                 children: [
                   Icon(Icons.location_on, color: Colors.blue, size: 20),
                   SizedBox(width: 8),
-                  Text(
-                    '$_currentRadius KM',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  if (!_locationEnabled) 
+                  Text('$_currentRadius KM', style: TextStyle(fontSize: 16)),
+                  if (!_locationEnabled)
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child: Icon(Icons.location_off, color: Colors.grey, size: 16),
+                      child: Icon(
+                        Icons.location_off,
+                        color: Colors.grey,
+                        size: 16,
+                      ),
                     ),
                 ],
               ),
@@ -487,16 +509,24 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildActionButton(Icons.close, Colors.red, _handleSwipeLeft),
+              _buildActionButton(Icons.close, Colors.red, _handleSwipeLeft, 'Dislike'),
               _buildActionButton(
                 Icons.refresh,
                 Colors.blue,
                 _refreshLocationAndMatches,
+                'Refresh',
+              ),
+              _buildActionButton(
+                Icons.info_outline,
+                Colors.purple,
+                () => _showProfileDetail(currentUser),
+                'Profile',
               ),
               _buildActionButton(
                 Icons.favorite,
                 Colors.green,
                 _handleSwipeRight,
+                'Like',
               ),
             ],
           ),
@@ -531,6 +561,72 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+
+        if (_showNavigationGuide)
+          Positioned(
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: AnimatedOpacity(
+              duration: Duration(milliseconds: 300),
+              opacity: _showNavigationGuide ? 1.0 : 0.0,
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 40),
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      children: [
+                        Icon(Icons.touch_app, color: Colors.white, size: 24),
+                        SizedBox(height: 5),
+                        Text(
+                          'Tap sides',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                        Text(
+                          'to navigate',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Icon(Icons.swipe, color: Colors.white, size: 24),
+                        SizedBox(height: 5),
+                        Text(
+                          'Swipe card',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                        Text(
+                          'to like/dislike',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.white, size: 24),
+                        SizedBox(height: 5),
+                        Text(
+                          'Tap info',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                        Text(
+                          'for details',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -539,24 +635,28 @@ class _HomeScreenState extends State<HomeScreen> {
     IconData icon,
     Color color,
     VoidCallback onPressed,
+    String tooltip,
   ) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: color),
-        onPressed: onPressed,
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: IconButton(
+          icon: Icon(icon, color: color),
+          onPressed: onPressed,
+        ),
       ),
     );
   }
@@ -646,217 +746,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  void _showProfileDetail(User user) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildProfileDetailSheet(user),
-    );
-  }
-
-  Widget _buildProfileDetailSheet(User user) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25),
-                ),
-                image: DecorationImage(
-                  image: user.photo.isNotEmpty
-                      ? NetworkImage(
-                          'http://10.0.2.2:5000/uploads/${user.photo}',
-                        )
-                      : const AssetImage('assets/default_avatar.png')
-                            as ImageProvider,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on, color: Colors.white, size: 14),
-                          SizedBox(width: 4),
-                          Text(
-                            user.distance != null 
-                                ? '${user.distance!.toStringAsFixed(1)} km away'
-                                : 'Distance unknown',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        user.name,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${user.age}',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDetailGrid(user),
-                  const SizedBox(height: 20),
-                  if (user.bio.isNotEmpty) ...[
-                    const Text(
-                      'About',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      user.bio,
-                      style: const TextStyle(fontSize: 16, height: 1.4),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (user.interests.isNotEmpty) ...[
-                    const Text(
-                      'Interests',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: user.interests.map((interest) {
-                        return Chip(
-                          label: Text(interest),
-                          backgroundColor: Colors.blue[50],
-                          labelStyle: TextStyle(color: Colors.blue[700]),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailGrid(User user) {
-    final details = [
-      if (user.distance != null)
-        _buildDetailItem(Icons.location_on, 'Distance', '${user.distance!.toStringAsFixed(1)} km'),
-      if (user.school.isNotEmpty)
-        _buildDetailItem(Icons.school, 'School', user.school),
-      if (user.jobTitle.isNotEmpty)
-        _buildDetailItem(Icons.work, 'Job', user.jobTitle),
-      if (user.livingIn.isNotEmpty)
-        _buildDetailItem(Icons.location_city, 'Location', user.livingIn),
-      if (user.company.isNotEmpty)
-        _buildDetailItem(Icons.business, 'Company', user.company),
-      if (user.height != null)
-        _buildDetailItem(Icons.height, 'Height', '${user.height} cm'),
-      if (user.topArtist.isNotEmpty)
-        _buildDetailItem(Icons.music_note, 'Top Artist', user.topArtist),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 3,
-      ),
-      itemCount: details.length,
-      itemBuilder: (context, index) => details[index],
-    );
-  }
-
-  Widget _buildDetailItem(IconData icon, String title, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.blue),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class HomeTab extends StatelessWidget {
@@ -878,6 +767,269 @@ class HomeTab extends StatelessWidget {
           Text(
             'Role: ${user?.role ?? 'Unknown'}',
             style: const TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileDetailScreen extends StatefulWidget {
+  final User user;
+
+  const ProfileDetailScreen({Key? key, required this.user}) : super(key: key);
+
+  @override
+  State<ProfileDetailScreen> createState() => _ProfileDetailScreenState();
+}
+
+class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
+  late PageController _imageController;
+  int _currentImageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _imageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrls = widget.user.allImageUrls;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.user.name),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () {
+              // Share profile
+            },
+          ),
+        ],
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 400,
+            pinned: false,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _imageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentImageIndex = index;
+                      });
+                    },
+                    itemCount: imageUrls.length,
+                    itemBuilder: (context, index) {
+                      return Image.network(
+                        imageUrls[index],
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      );
+                    },
+                  ),
+                  
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_currentImageIndex + 1}/${imageUrls.length}',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  
+                  if (imageUrls.length > 1)
+                    Positioned(
+                      left: 10,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: IconButton(
+                          icon: Icon(Icons.chevron_left, color: Colors.white, size: 40),
+                          onPressed: () {
+                            if (_currentImageIndex > 0) {
+                              _imageController.previousPage(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  
+                  if (imageUrls.length > 1)
+                    Positioned(
+                      right: 10,
+                      top: 0,
+                      bottom: 0,
+                      child: Center(
+                        child: IconButton(
+                          icon: Icon(Icons.chevron_right, color: Colors.white, size: 40),
+                          onPressed: () {
+                            if (_currentImageIndex < imageUrls.length - 1) {
+                              _imageController.nextPage(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          
+          SliverList(
+            delegate: SliverChildListDelegate([
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          widget.user.name,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '${widget.user.age}',
+                          style: TextStyle(
+                            fontSize: 28,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 3,
+                      children: [
+                        if (widget.user.jobTitle.isNotEmpty)
+                          _buildDetailItem(Icons.work, 'Job', widget.user.jobTitle),
+                        if (widget.user.school.isNotEmpty)
+                          _buildDetailItem(Icons.school, 'School', widget.user.school),
+                        if (widget.user.livingIn.isNotEmpty)
+                          _buildDetailItem(Icons.location_on, 'Location', widget.user.livingIn),
+                        if (widget.user.company.isNotEmpty)
+                          _buildDetailItem(Icons.business, 'Company', widget.user.company),
+                        if (widget.user.height != null)
+                          _buildDetailItem(Icons.height, 'Height', '${widget.user.height} cm'),
+                        if (widget.user.topArtist.isNotEmpty)
+                          _buildDetailItem(Icons.music_note, 'Top Artist', widget.user.topArtist),
+                      ],
+                    ),
+                    
+                    SizedBox(height: 20),
+                    
+                    if (widget.user.bio.isNotEmpty) ...[
+                      Text(
+                        'About',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        widget.user.bio,
+                        style: TextStyle(fontSize: 16, height: 1.4),
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                    
+                    if (widget.user.interests.isNotEmpty) ...[
+                      Text(
+                        'Interests',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: widget.user.interests.map((interest) {
+                          return Chip(
+                            label: Text(interest),
+                            backgroundColor: Colors.blue[50],
+                            labelStyle: TextStyle(color: Colors.blue[700]),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildDetailItem(IconData icon, String title, String value) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.blue),
+          SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

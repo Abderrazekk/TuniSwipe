@@ -769,6 +769,136 @@ const getUserMedia = async (req, res) => {
     });
   }
 };
+
+// NEW: Get user data optimized for swipe cards
+const getUserForSwipeCard = async (req, res) => {
+  const { userId } = req.params;
+  
+  console.log(`${colors.blue}🃏 Getting user data for swipe card: ${userId}${colors.reset}`);
+  
+  try {
+    const user = await User.findById(userId)
+      .select('-password -__v -createdAt -updatedAt -email -role')
+      .lean();
+    
+    if (!user) {
+      console.log(`${colors.red}❌ User not found for swipe: ${userId}${colors.reset}`);
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    
+    // Format user data for swipe card
+    const swipeData = {
+      _id: user._id,
+      name: user.name,
+      age: user.age,
+      bio: user.bio,
+      gender: user.gender,
+      interests: user.interests,
+      photo: user.photo,
+      media: user.media || [],
+      school: user.school || '',
+      height: user.height || null,
+      jobTitle: user.jobTitle || '',
+      livingIn: user.livingIn || '',
+      topArtist: user.topArtist || '',
+      company: user.company || '',
+      locationEnabled: user.locationEnabled || false,
+      locationRadius: user.locationRadius || 50,
+    };
+    
+    console.log(`${colors.green}✅ User data prepared for swipe card${colors.reset}`);
+    console.log(`${colors.blue}📊 Total images: ${1 + (user.media?.length || 0)}${colors.reset}`);
+    
+    res.json({
+      success: true,
+      data: swipeData,
+      message: "User data retrieved for swipe card",
+    });
+  } catch (error) {
+    console.error(`${colors.red}💥 Error getting user for swipe:${colors.reset}`, error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving user data",
+    });
+  }
+};
+
+// NEW: Get potential matches with complete image data
+const getPotentialMatchesWithImages = async (req, res) => {
+  console.log(`${colors.blue}👥 Getting potential matches with images for: ${req.user.email}${colors.reset}`);
+  
+  try {
+    const currentUser = await User.findById(req.user._id);
+    
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    
+    // Build query based on location settings
+    let query = {
+      _id: { $ne: currentUser._id }, // Exclude current user
+      locationEnabled: true,
+    };
+    
+    // If user has location enabled, filter by distance
+    if (currentUser.location && currentUser.locationEnabled) {
+      const radius = currentUser.locationRadius || 50;
+      const radiusInMeters = radius * 1000;
+      
+      query.location = {
+        $near: {
+          $geometry: currentUser.location,
+          $maxDistance: radiusInMeters,
+        },
+      };
+    }
+    
+    // Get potential matches
+    const potentialMatches = await User.find(query)
+      .select('-password -email -__v -createdAt -updatedAt')
+      .lean();
+    
+    // Format matches with complete image data
+    const formattedMatches = potentialMatches.map(user => ({
+      _id: user._id,
+      name: user.name,
+      age: user.age,
+      bio: user.bio,
+      gender: user.gender,
+      interests: user.interests,
+      photo: user.photo,
+      media: user.media || [],
+      school: user.school || '',
+      height: user.height || null,
+      jobTitle: user.jobTitle || '',
+      livingIn: user.livingIn || '',
+      topArtist: user.topArtist || '',
+      company: user.company || '',
+      distance: user.distance || null,
+    }));
+    
+    console.log(`${colors.green}✅ Found ${formattedMatches.length} potential matches${colors.reset}`);
+    
+    res.json({
+      success: true,
+      data: formattedMatches,
+      message: "Potential matches retrieved with complete image data",
+    });
+  } catch (error) {
+    console.error(`${colors.red}💥 Error getting potential matches:${colors.reset}`, error);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving potential matches",
+    });
+  }
+};
+
 module.exports = {
   userSignup,
   userSignin,
@@ -780,4 +910,6 @@ module.exports = {
   addUserMedia,
   removeUserMedia,
   getUserMedia,
+  getUserForSwipeCard, // NEW
+  getPotentialMatchesWithImages, // NEW
 };

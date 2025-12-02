@@ -1,3 +1,4 @@
+// models/User.js
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
@@ -53,7 +54,6 @@ const userSchema = new mongoose.Schema(
       min: [13, "User must be at least 13 years old"],
       max: [120, "Please enter a valid age"],
     },
-    // ADD MEDIA FIELD
     media: [
       {
         filename: String,
@@ -64,7 +64,6 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    // ADD NEW FIELDS - MAKE THEM OPTIONAL
     school: {
       type: String,
       default: "",
@@ -91,7 +90,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
+    // Enhanced location fields
     location: {
       type: {
         type: String,
@@ -100,20 +99,31 @@ const userSchema = new mongoose.Schema(
       },
       coordinates: {
         type: [Number],
-        default: [0, 0], // [longitude, latitude]
+        default: null,
       },
     },
     locationEnabled: {
       type: Boolean,
       default: false,
     },
-    maxDistance: {
+    locationRadius: {
       type: Number,
-      default: 50, // Default radius in KM
+      default: 50,
+      min: 0,
+      max: 150,
     },
-    lastLocationUpdate: {
+    locationAccuracy: {
+      type: Number,
+      default: null,
+    },
+    locationTimestamp: {
       type: Date,
-      default: Date.now,
+      default: null,
+    },
+    locationProvider: {
+      type: String,
+      enum: ["gps", "network", "passive", "fused", null],
+      default: null,
     },
   },
   {

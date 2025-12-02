@@ -1,3 +1,4 @@
+// routes/auth.js
 const express = require("express");
 const { authenticate, authorizeAdmin } = require("../middleware/auth");
 const { handleUpload, handleMediaUpload } = require("../middleware/upload");
@@ -15,8 +16,10 @@ const {
 } = require("../controllers/authController");
 const {
   updateUserLocation,
-  getNearbyUsers,
-  getUserLocationSettings,
+  updateLocationRadius,
+  getLocationSettings,
+  toggleLocationEnabled,
+  getUsersWithinRadius,
 } = require("../controllers/locationController");
 
 const router = express.Router();
@@ -38,8 +41,10 @@ router.delete("/media/:filename", authenticate, removeUserMedia);
 
 // Location routes
 router.put("/location", authenticate, updateUserLocation);
-router.get("/location/nearby", authenticate, getNearbyUsers);
-router.get("/location/settings", authenticate, getUserLocationSettings);
+router.put("/location/radius", authenticate, updateLocationRadius);
+router.put("/location/toggle", authenticate, toggleLocationEnabled);
+router.get("/location/settings", authenticate, getLocationSettings);
+router.get("/location/nearby", authenticate, getUsersWithinRadius);
 
 // Admin routes
 router.get("/admin/stats", authenticate, authorizeAdmin, getAdminStats);

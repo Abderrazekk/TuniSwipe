@@ -1,3 +1,4 @@
+// models/user.dart
 class User {
   final String id;
   final String name;
@@ -10,13 +11,13 @@ class User {
   final String photo;
   final int age;
   final List<UserMedia> media;
-  // KEEP NEW FIELDS BUT THEY WILL BE EMPTY BY DEFAULT
   final String school;
   final int? height;
   final String jobTitle;
   final String livingIn;
   final String topArtist;
   final String company;
+  final double? distance;
 
   User({
     required this.id,
@@ -30,38 +31,18 @@ class User {
     required this.photo,
     required this.age,
     required this.media,
-    // KEEP NEW FIELDS WITH DEFAULT EMPTY VALUES
     this.school = '',
     this.height,
     this.jobTitle = '',
     this.livingIn = '',
     this.topArtist = '',
     this.company = '',
+    this.distance,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    print('👤 Creating User object from JSON:');
-    print('   🆔 ID: ${json['_id']}');
-    print('   📛 Name: ${json['name']}');
-    print('   📧 Email: ${json['email']}');
-    print('   🎯 Role: ${json['role']}');
-    print('   📝 Bio: ${json['bio']}');
-    print('   🚻 Gender: ${json['gender']}');
-    print('   🏷️ Interests: ${json['interests']}');
-    print('   📸 Photo: ${json['photo']}');
-    print('   🎂 Age: ${json['age']}');
-    print('   🏫 School: ${json['school']}');
-    print('   📏 Height: ${json['height']}');
-    print('   💼 Job Title: ${json['jobTitle']}');
-    print('   🏠 Living In: ${json['livingIn']}');
-    print('   🎵 Top Artist: ${json['topArtist']}');
-    print('   🏢 Company: ${json['company']}');
-    print(
-      '   🖼️ Media count: ${json['media'] != null ? json['media'].length : 0}',
-    );
-    print('   🔐 Token: ${json['token']?.substring(0, 20)}...');
+    print('👤 Creating User object from JSON');
 
-    // Parse age
     int parsedAge = 0;
     if (json['age'] != null) {
       if (json['age'] is int) {
@@ -73,7 +54,6 @@ class User {
       }
     }
 
-    // Parse gender
     String parsedGender = '';
     if (json['gender'] != null) {
       if (json['gender'] is String) {
@@ -81,7 +61,6 @@ class User {
       }
     }
 
-    // Parse interests
     List<String> parsedInterests = [];
     if (json['interests'] != null) {
       if (json['interests'] is List) {
@@ -91,7 +70,6 @@ class User {
       }
     }
 
-    // Parse height
     int? parsedHeight;
     if (json['height'] != null) {
       if (json['height'] is int) {
@@ -103,12 +81,22 @@ class User {
       }
     }
 
-    // PARSE MEDIA
     List<UserMedia> parsedMedia = [];
     if (json['media'] != null && json['media'] is List) {
       parsedMedia = (json['media'] as List).map((mediaJson) {
         return UserMedia.fromJson(mediaJson);
       }).toList();
+    }
+
+    double? parsedDistance;
+    if (json['distance'] != null) {
+      if (json['distance'] is double) {
+        parsedDistance = json['distance'];
+      } else if (json['distance'] is int) {
+        parsedDistance = json['distance'].toDouble();
+      } else if (json['distance'] is String) {
+        parsedDistance = double.tryParse(json['distance']);
+      }
     }
 
     return User(
@@ -123,13 +111,13 @@ class User {
       photo: json['photo']?.toString() ?? '',
       age: parsedAge,
       media: parsedMedia,
-      // KEEP PARSING NEW FIELDS BUT THEY WILL BE EMPTY IF NOT PROVIDED
       school: json['school']?.toString() ?? '',
       height: parsedHeight,
       jobTitle: json['jobTitle']?.toString() ?? '',
       livingIn: json['livingIn']?.toString() ?? '',
       topArtist: json['topArtist']?.toString() ?? '',
       company: json['company']?.toString() ?? '',
+      distance: parsedDistance,
     );
   }
 
@@ -151,6 +139,7 @@ class User {
       'livingIn': livingIn,
       'topArtist': topArtist,
       'company': company,
+      'distance': distance,
       'media': media
           .map(
             (m) => {
@@ -175,13 +164,13 @@ class User {
     String? photo,
     int? age,
     List<UserMedia>? media,
-    // KEEP NEW FIELDS IN COPYWITH
     String? school,
     int? height,
     String? jobTitle,
     String? livingIn,
     String? topArtist,
     String? company,
+    double? distance,
   }) {
     return User(
       id: id ?? this.id,
@@ -195,13 +184,13 @@ class User {
       photo: photo ?? this.photo,
       age: age ?? this.age,
       media: media ?? this.media,
-      // KEEP NEW FIELDS
       school: school ?? this.school,
       height: height ?? this.height,
       jobTitle: jobTitle ?? this.jobTitle,
       livingIn: livingIn ?? this.livingIn,
       topArtist: topArtist ?? this.topArtist,
       company: company ?? this.company,
+      distance: distance ?? this.distance,
     );
   }
 
@@ -211,7 +200,7 @@ class User {
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       role: json['role']?.toString() ?? 'user',
-      token: '', // Not needed for profile cards
+      token: '',
       bio: json['bio']?.toString() ?? '',
       gender: json['gender']?.toString() ?? '',
       interests: List<String>.from(json['interests'] ?? []),
@@ -219,7 +208,7 @@ class User {
       age: json['age'] is int
           ? json['age']
           : int.tryParse(json['age']?.toString() ?? '') ?? 0,
-      media: [], // Not needed for card view
+      media: [],
       school: json['school']?.toString() ?? '',
       height: json['height'] is int
           ? json['height']
@@ -228,29 +217,15 @@ class User {
       livingIn: json['livingIn']?.toString() ?? '',
       topArtist: json['topArtist']?.toString() ?? '',
       company: json['company']?.toString() ?? '',
+      distance: json['distance'] is double
+          ? json['distance']
+          : double.tryParse(json['distance']?.toString() ?? ''),
     );
   }
 
   factory User.fromMatchJson(Map<String, dynamic> json) {
-    print('👤 Creating User from match JSON:');
-    print('   🆔 ID: ${json['_id']}');
-    print('   📛 Name: ${json['name']}');
-    print('   📧 Email: ${json['email']}');
-    print('   🎯 Role: ${json['role']}');
-    print('   📝 Bio: ${json['bio']}');
-    print('   🚻 Gender: ${json['gender']}');
-    print('   🏷️ Interests: ${json['interests']}');
-    print('   📸 Photo: ${json['photo']}');
-    print('   🖼️ Main Photo: ${json['mainPhoto']}');
-    print('   🎂 Age: ${json['age']}');
-    print('   🏫 School: ${json['school']}');
-    print('   📏 Height: ${json['height']}');
-    print('   💼 Job Title: ${json['jobTitle']}');
-    print('   🏠 Living In: ${json['livingIn']}');
-    print('   🎵 Top Artist: ${json['topArtist']}');
-    print('   🏢 Company: ${json['company']}');
+    print('👤 Creating User from match JSON');
 
-    // Parse age safely
     int parsedAge = 0;
     if (json['age'] != null) {
       if (json['age'] is int) {
@@ -262,7 +237,6 @@ class User {
       }
     }
 
-    // Parse height safely
     int? parsedHeight;
     if (json['height'] != null) {
       if (json['height'] is int) {
@@ -274,7 +248,6 @@ class User {
       }
     }
 
-    // Parse interests safely
     List<String> parsedInterests = [];
     if (json['interests'] != null && json['interests'] is List) {
       try {
@@ -287,29 +260,40 @@ class User {
       }
     }
 
+    double? parsedDistance;
+    if (json['distance'] != null) {
+      if (json['distance'] is double) {
+        parsedDistance = json['distance'];
+      } else if (json['distance'] is int) {
+        parsedDistance = json['distance'].toDouble();
+      } else if (json['distance'] is String) {
+        parsedDistance = double.tryParse(json['distance']);
+      }
+    }
+
     return User(
       id: json['_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       role: json['role']?.toString() ?? 'user',
-      token: '', // Not needed for match users
+      token: '',
       bio: json['bio']?.toString() ?? '',
       gender: json['gender']?.toString() ?? '',
       interests: parsedInterests,
       photo: (json['mainPhoto']?.toString() ?? json['photo']?.toString()) ?? '',
       age: parsedAge,
-      media: [], // Not needed for chat
+      media: [],
       school: json['school']?.toString() ?? '',
       height: parsedHeight,
       jobTitle: json['jobTitle']?.toString() ?? '',
       livingIn: json['livingIn']?.toString() ?? '',
       topArtist: json['topArtist']?.toString() ?? '',
       company: json['company']?.toString() ?? '',
+      distance: parsedDistance,
     );
   }
 }
 
-// NEW: UserMedia model
 class UserMedia {
   final String filename;
   final String originalName;

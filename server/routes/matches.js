@@ -1,4 +1,4 @@
-// routes/matches.js - Complete rewrite
+// routes/matches.js
 const express = require("express");
 const { authenticate } = require("../middleware/auth");
 const User = require("../models/User");
@@ -6,7 +6,6 @@ const Swipe = require("../models/Swipe");
 
 const router = express.Router();
 
-// Color codes for console logs
 const colors = {
   reset: "\x1b[0m",
   green: "\x1b[32m",
@@ -16,145 +15,10 @@ const colors = {
 };
 
 /**
- * Get potential matches for the current user
- * Excludes current user and already swiped users
- */
-const getPotentialMatches = async (req, res) => {
-  try {
-    const currentUserId = req.user._id;
-    const currentUser = await User.findById(currentUserId);
-
-    console.log(
-      `${colors.blue}🎯 Getting potential matches for: ${currentUser.email} (${currentUser.gender})${colors.reset}`
-    );
-
-    // Get all users that current user has already swiped
-    const userSwipes = await Swipe.find({ swiper: currentUserId });
-    const swipedUserIds = userSwipes.map((swipe) => swipe.swiped.toString());
-
-    // Add current user to excluded list
-    swipedUserIds.push(currentUserId.toString());
-
-    console.log(
-      `${colors.yellow}📋 Excluding ${swipedUserIds.length} users (already swiped + self)${colors.reset}`
-    );
-
-    // Determine target gender based on current user's gender
-    let targetGender;
-    if (currentUser.gender === "male") {
-      targetGender = "female";
-    } else if (currentUser.gender === "female") {
-      targetGender = "male";
-    } else {
-      targetGender = { $in: ["male", "female"] };
-    }
-
-    console.log(
-      `${colors.blue}🎯 Looking for ${targetGender} profiles${colors.reset}`
-    );
-
-    // Build base query
-    const query = {
-      _id: { $nin: swipedUserIds },
-    };
-
-    // Add gender filter
-    if (targetGender) {
-      if (typeof targetGender === "string") {
-        query.gender = targetGender;
-      } else {
-        query.gender = targetGender;
-      }
-    }
-
-    // ADD LOCATION FILTERING
-    if (currentUser.location && currentUser.locationEnabled) {
-      const maxDistance = currentUser.maxDistance || 50; // Default to 50KM if not set
-
-      query.location = {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: currentUser.location.coordinates,
-          },
-          $maxDistance: maxDistance * 1000, // Convert KM to meters
-        },
-      };
-      query.locationEnabled = true;
-
-      console.log(
-        `${colors.blue}📍 Filtering by location: ${maxDistance} KM radius${colors.reset}`
-      );
-    } else {
-      console.log(
-        `${colors.yellow}⚠️ Location filtering disabled or no location set${colors.reset}`
-      );
-    }
-
-    // Get users who are not swiped, not current user, match target gender, and within distance
-    const potentialMatches = await User.find(query)
-      .select("-password")
-      .limit(20);
-
-    console.log(
-      `${colors.green}✅ Found ${potentialMatches.length} potential matches${colors.reset}`
-    );
-
-    // Calculate distance for each match and add to response
-    const matchesWithLocation = await Promise.all(
-      potentialMatches.map(async (user) => {
-        const userObj = user.toObject();
-
-        // Use first media item as main photo if available
-        userObj.mainPhoto =
-          user.media && user.media.length > 0
-            ? user.media[0].filename
-            : user.photo;
-
-        // Calculate distance if both users have locations
-        if (currentUser.location && user.location) {
-          userObj.distance = calculateDistance(
-            currentUser.location.coordinates[1], // lat
-            currentUser.location.coordinates[0], // lng
-            user.location.coordinates[1], // lat
-            user.location.coordinates[0] // lng
-          );
-        }
-
-        return userObj;
-      })
-    );
-
-    // Sort by distance (closest first)
-    matchesWithLocation.sort((a, b) => {
-      if (a.distance && b.distance) {
-        return a.distance - b.distance;
-      }
-      return 0;
-    });
-
-    res.json({
-      success: true,
-      data: matchesWithLocation,
-      message: "Potential matches retrieved successfully",
-    });
-  } catch (error) {
-    console.error(
-      `${colors.red}💥 Get matches error:${colors.reset}`,
-      error.message
-    );
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving potential matches",
-    });
-  }
-};
-
-/**
- * Calculate distance between two coordinates using Haversine formula
+ * Calculate distance between coordinates
  */
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Earth's radius in KM
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -165,22 +29,124 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
-  return Math.round(distance * 10) / 10; // Round to 1 decimal place
+  return Math.round(distance * 10) / 10;
 };
 
 /**
- * Handle swipe action (like/dislike) with mutual matching
+ * Get potential matches with location filtering
+ */
+const getPotentialMatches = async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+    const currentUser = await User.findById(currentUserId);
+
+    console.log(`${colors.blue}🎯 Potential matches for: ${currentUser.email}${colors.reset}`);
+    console.log(`${colors.blue}   Location enabled: ${currentUser.locationEnabled}${colors.reset}`);
+    console.log(`${colors.blue}   Location radius: ${currentUser.locationRadius} KM${colors.reset}`);
+
+    const userSwipes = await Swipe.find({ swiper: currentUserId });
+    const swipedUserIds = userSwipes.map((swipe) => swipe.swiped.toString());
+    swipedUserIds.push(currentUserId.toString());
+
+    let targetGender;
+    if (currentUser.gender === "male") {
+      targetGender = "female";
+    } else if (currentUser.gender === "female") {
+      targetGender = "male";
+    } else {
+      targetGender = { $in: ["male", "female"] };
+    }
+
+    const query = {
+      _id: { $nin: swipedUserIds },
+    };
+
+    if (targetGender) {
+      query.gender = targetGender;
+    }
+
+    // Location filtering
+    if (currentUser.location && currentUser.locationEnabled && currentUser.locationRadius > 0) {
+      const maxDistance = currentUser.locationRadius;
+      
+      query.location = {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: currentUser.location.coordinates,
+          },
+          $maxDistance: maxDistance * 1000,
+        },
+      };
+      query.locationEnabled = true;
+
+      console.log(`${colors.blue}📍 Filtering by location: ${maxDistance} KM${colors.reset}`);
+    } else if (currentUser.locationRadius === 0) {
+      console.log(`${colors.yellow}📍 Radius is 0 - showing all users${colors.reset}`);
+    } else {
+      console.log(`${colors.yellow}⚠️ Location filtering disabled${colors.reset}`);
+    }
+
+    const potentialMatches = await User.find(query)
+      .select("name email photo age gender bio interests school jobTitle livingIn height topArtist company location")
+      .limit(30);
+
+    const matchesWithDetails = await Promise.all(
+      potentialMatches.map(async (user) => {
+        const userObj = user.toObject();
+        
+        if (currentUser.location && user.location) {
+          const [lon1, lat1] = currentUser.location.coordinates;
+          const [lon2, lat2] = user.location.coordinates;
+          userObj.distance = calculateDistance(lat1, lon1, lat2, lon2);
+        }
+        
+        const userWithMedia = await User.findById(user._id).select("media");
+        userObj.mainPhoto = userWithMedia.media && userWithMedia.media.length > 0
+          ? userWithMedia.media[0].filename
+          : user.photo;
+
+        return userObj;
+      })
+    );
+
+    if (currentUser.location && currentUser.locationEnabled && currentUser.locationRadius > 0) {
+      matchesWithDetails.sort((a, b) => {
+        if (a.distance && b.distance) {
+          return a.distance - b.distance;
+        }
+        return 0;
+      });
+    }
+
+    console.log(`${colors.green}✅ Found ${matchesWithDetails.length} matches${colors.reset}`);
+
+    res.json({
+      success: true,
+      data: matchesWithDetails,
+      currentUserRadius: currentUser.locationRadius,
+      locationFiltering: currentUser.locationEnabled && currentUser.locationRadius > 0,
+      message: "Potential matches retrieved successfully",
+    });
+  } catch (error) {
+    console.error(`${colors.red}💥 Get matches error:${colors.reset}`, error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving potential matches",
+    });
+  }
+};
+
+/**
+ * Handle swipe action
  */
 const handleSwipe = async (req, res) => {
   try {
-    const { targetUserId, action } = req.body; // action: 'like' or 'dislike'
+    const { targetUserId, action } = req.body;
     const currentUserId = req.user._id;
 
-    console.log(
-      `${colors.blue}💕 Swipe action: ${action} by ${currentUserId} on ${targetUserId}${colors.reset}`
-    );
+    console.log(`${colors.blue}💕 Swipe: ${action} by ${currentUserId} on ${targetUserId}${colors.reset}`);
 
-    // Check if target user exists
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) {
       return res.status(404).json({
@@ -189,7 +155,6 @@ const handleSwipe = async (req, res) => {
       });
     }
 
-    // Check if already swiped
     const existingSwipe = await Swipe.findOne({
       swiper: currentUserId,
       swiped: targetUserId,
@@ -202,7 +167,6 @@ const handleSwipe = async (req, res) => {
       });
     }
 
-    // Save the swipe
     const swipe = new Swipe({
       swiper: currentUserId,
       swiped: targetUserId,
@@ -214,9 +178,7 @@ const handleSwipe = async (req, res) => {
     let isMatch = false;
     let matchMessage = null;
 
-    // Check for mutual like only if current action is 'like'
     if (action === "like") {
-      // Check if the target user has also liked the current user
       const mutualSwipe = await Swipe.findOne({
         swiper: targetUserId,
         swiped: currentUserId,
@@ -226,20 +188,11 @@ const handleSwipe = async (req, res) => {
       if (mutualSwipe) {
         isMatch = true;
         matchMessage = `It's a match! You and ${targetUser.name} have liked each other! 🎉`;
-        console.log(
-          `${colors.green}💑 MATCH FOUND: ${currentUserId} and ${targetUserId}${colors.reset}`
-        );
+        console.log(`${colors.green}💑 MATCH FOUND${colors.reset}`);
       }
     }
 
-    console.log(
-      `${colors.green}✅ Swipe recorded: ${action} by ${currentUserId} on ${targetUserId}${colors.reset}`
-    );
-    console.log(
-      `${colors.blue}🤝 Match status: ${isMatch ? "MATCH!" : "No match"}${
-        colors.reset
-      }`
-    );
+    console.log(`${colors.green}✅ Swipe recorded${colors.reset}`);
 
     res.json({
       success: true,
@@ -265,29 +218,24 @@ const handleSwipe = async (req, res) => {
 };
 
 /**
- * Get user's matches (mutual likes)
+ * Get mutual matches
  */
-const getUserMatches = async (req, res) => {
+const getMutualMatches = async (req, res) => {
   try {
     const currentUserId = req.user._id;
 
-    console.log(
-      `${colors.blue}💑 Getting matches for user: ${currentUserId}${colors.reset}`
-    );
+    console.log(`${colors.blue}💑 Getting matches for: ${currentUserId}${colors.reset}`);
 
-    // Get all likes by current user
     const userLikes = await Swipe.find({
       swiper: currentUserId,
       action: "like",
-    }).populate("swiped", "name email photo age gender bio");
+    }).populate("swiped", "name email photo age gender bio interests school jobTitle livingIn");
 
-    // Get all users who liked current user
     const likedByUsers = await Swipe.find({
       swiped: currentUserId,
       action: "like",
-    }).populate("swiper", "name email photo age gender bio");
+    }).populate("swiper", "name email photo age gender bio interests school jobTitle livingIn");
 
-    // Find mutual likes (matches)
     const matches = [];
 
     for (const like of userLikes) {
@@ -296,200 +244,8 @@ const getUserMatches = async (req, res) => {
       );
 
       if (mutualLike) {
-        matches.push({
-          user: like.swiped,
-          matchedAt: mutualLike.createdAt,
-        });
-      }
-    }
-
-    console.log(
-      `${colors.green}✅ Found ${matches.length} matches for user ${currentUserId}${colors.reset}`
-    );
-
-    res.json({
-      success: true,
-      data: {
-        matches,
-        totalMatches: matches.length,
-      },
-      message: "Matches retrieved successfully",
-    });
-  } catch (error) {
-    console.error(
-      `${colors.red}💥 Get matches error:${colors.reset}`,
-      error.message
-    );
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving matches",
-    });
-  }
-};
-
-/**
- * Get user profile by ID for card display
- */
-const getUserProfileForCard = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    console.log(
-      `${colors.blue}👤 Getting profile for card: ${userId}${colors.reset}`
-    );
-
-    const user = await User.findById(userId).select("-password").lean();
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Get first media item as main photo if available
-    const userWithMedia = await User.findById(userId).select("media");
-    user.mainPhoto =
-      userWithMedia.media.length > 0
-        ? userWithMedia.media[0].filename
-        : user.photo;
-
-    console.log(
-      `${colors.green}✅ Profile retrieved for card: ${user.name}${colors.reset}`
-    );
-
-    res.json({
-      success: true,
-      data: user,
-      message: "User profile retrieved successfully",
-    });
-  } catch (error) {
-    console.error(
-      `${colors.red}💥 Get profile error:${colors.reset}`,
-      error.message
-    );
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving user profile",
-    });
-  }
-};
-
-// routes/matches.js - Add these new functions
-
-/**
- * Get users who liked the current user (only non-matches)
- */
-const getUsersWhoLikedMe = async (req, res) => {
-  try {
-    const currentUserId = req.user._id;
-    const currentUser = await User.findById(currentUserId);
-
-    console.log(
-      `${colors.blue}💖 Getting users who liked: ${currentUser.email}${colors.reset}`
-    );
-
-    // Find all swipes where current user was swiped and action was 'like'
-    const likes = await Swipe.find({
-      swiped: currentUserId,
-      action: "like",
-    }).populate(
-      "swiper",
-      "name email photo age gender bio interests school jobTitle livingIn"
-    );
-
-    console.log(
-      `${colors.yellow}📋 Found ${likes.length} total likes${colors.reset}`
-    );
-
-    // Filter out mutual matches (only show users I haven't liked back yet)
-    const nonMutualLikes = [];
-
-    for (let like of likes) {
-      // Check if current user has also liked this user (mutual like)
-      const mutualLike = await Swipe.findOne({
-        swiper: currentUserId,
-        swiped: like.swiper._id,
-        action: "like",
-      });
-
-      // Only include if NOT a mutual like (user hasn't liked back yet)
-      if (!mutualLike) {
-        const swiper = like.swiper.toObject();
-        const swiperWithMedia = await User.findById(swiper._id).select("media");
-
-        swiper.mainPhoto =
-          swiperWithMedia.media && swiperWithMedia.media.length > 0
-            ? swiperWithMedia.media[0].filename
-            : swiper.photo;
-
-        nonMutualLikes.push({
-          user: swiper,
-          likedAt: like.createdAt,
-          swipeId: like._id, // Include swipe ID for reference
-        });
-      }
-    }
-
-    console.log(
-      `${colors.green}✅ Returning ${nonMutualLikes.length} non-mutual likes${colors.reset}`
-    );
-
-    res.json({
-      success: true,
-      data: {
-        likes: nonMutualLikes,
-      },
-      message: "Likes retrieved successfully",
-    });
-  } catch (error) {
-    console.error(
-      `${colors.red}💥 Get likes error:${colors.reset}`,
-      error.message
-    );
-    res.status(500).json({
-      success: false,
-      message: "Error retrieving likes",
-    });
-  }
-};
-
-/**
- * Get mutual matches (both users liked each other)
- */
-const getMutualMatches = async (req, res) => {
-  try {
-    const currentUserId = req.user._id;
-
-    console.log(
-      `${colors.blue}💑 Getting mutual matches for: ${currentUserId}${colors.reset}`
-    );
-
-    // Get all likes by current user
-    const userLikes = await Swipe.find({
-      swiper: currentUserId,
-      action: "like",
-    }).populate(
-      "swiped",
-      "name email photo age gender bio interests school jobTitle livingIn"
-    );
-
-    // Get mutual matches
-    const matches = [];
-
-    for (const like of userLikes) {
-      // Check if the liked user has also liked the current user
-      const mutualLike = await Swipe.findOne({
-        swiper: like.swiped._id,
-        swiped: currentUserId,
-        action: "like",
-      });
-
-      if (mutualLike) {
         const matchedUser = like.swiped.toObject();
-        const matchedUserWithMedia = await User.findById(
-          matchedUser._id
-        ).select("media");
+        const matchedUserWithMedia = await User.findById(matchedUser._id).select("media");
 
         matchedUser.mainPhoto =
           matchedUserWithMedia.media && matchedUserWithMedia.media.length > 0
@@ -504,9 +260,7 @@ const getMutualMatches = async (req, res) => {
       }
     }
 
-    console.log(
-      `${colors.green}✅ Found ${matches.length} mutual matches${colors.reset}`
-    );
+    console.log(`${colors.green}✅ Found ${matches.length} mutual matches${colors.reset}`);
 
     res.json({
       success: true,
@@ -516,10 +270,7 @@ const getMutualMatches = async (req, res) => {
       message: "Mutual matches retrieved successfully",
     });
   } catch (error) {
-    console.error(
-      `${colors.red}💥 Get matches error:${colors.reset}`,
-      error.message
-    );
+    console.error(`${colors.red}💥 Get matches error:${colors.reset}`, error.message);
     res.status(500).json({
       success: false,
       message: "Error retrieving matches",
@@ -527,12 +278,67 @@ const getMutualMatches = async (req, res) => {
   }
 };
 
+/**
+ * Get users who liked current user
+ */
+const getUsersWhoLikedMe = async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+
+    console.log(`${colors.blue}💖 Getting users who liked: ${currentUserId}${colors.reset}`);
+
+    const likes = await Swipe.find({
+      swiped: currentUserId,
+      action: "like",
+    }).populate("swiper", "name email photo age gender bio interests school jobTitle livingIn");
+
+    const nonMutualLikes = [];
+
+    for (let like of likes) {
+      const mutualLike = await Swipe.findOne({
+        swiper: currentUserId,
+        swiped: like.swiper._id,
+        action: "like",
+      });
+
+      if (!mutualLike) {
+        const swiper = like.swiper.toObject();
+        const swiperWithMedia = await User.findById(swiper._id).select("media");
+
+        swiper.mainPhoto =
+          swiperWithMedia.media && swiperWithMedia.media.length > 0
+            ? swiperWithMedia.media[0].filename
+            : swiper.photo;
+
+        nonMutualLikes.push({
+          user: swiper,
+          likedAt: like.createdAt,
+          swipeId: like._id,
+        });
+      }
+    }
+
+    console.log(`${colors.green}✅ Returning ${nonMutualLikes.length} likes${colors.reset}`);
+
+    res.json({
+      success: true,
+      data: {
+        likes: nonMutualLikes,
+      },
+      message: "Likes retrieved successfully",
+    });
+  } catch (error) {
+    console.error(`${colors.red}💥 Get likes error:${colors.reset}`, error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error retrieving likes",
+    });
+  }
+};
+
 router.get("/potential", authenticate, getPotentialMatches);
 router.post("/swipe", authenticate, handleSwipe);
-router.get("/matches", authenticate, getUserMatches);
-router.get("/user/:userId", authenticate, getUserProfileForCard);
-
-router.get("/likes", authenticate, getUsersWhoLikedMe);
 router.get("/matches", authenticate, getMutualMatches);
+router.get("/likes", authenticate, getUsersWhoLikedMe);
 
 module.exports = router;

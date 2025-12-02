@@ -45,6 +45,9 @@ dependencies:
   geocoding: ^4.0.0
 
   permission_handler: ^11.0.1
+  location: ^8.0.1
+  url_launcher: ^6.1.14 # ADD THIS for opening settings
+  app_settings: ^5.0.3 # ADD THIS for opening settings
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +69,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/default_avatar.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

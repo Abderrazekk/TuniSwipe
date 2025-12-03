@@ -1,4 +1,3 @@
-// widgets/swipe_card.dart - COMPLETE FILE WITH LOCATION SERVICES
 import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/location_service.dart';

@@ -578,61 +578,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: AnimatedOpacity(
               duration: Duration(milliseconds: 300),
               opacity: _showNavigationGuide ? 1.0 : 0.0,
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 40),
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      children: [
-                        Icon(Icons.touch_app, color: Colors.white, size: 24),
-                        SizedBox(height: 5),
-                        Text(
-                          'Tap sides',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                        Text(
-                          'to navigate',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(Icons.swipe, color: Colors.white, size: 24),
-                        SizedBox(height: 5),
-                        Text(
-                          'Swipe card',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                        Text(
-                          'to like/dislike',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.white, size: 24),
-                        SizedBox(height: 5),
-                        Text(
-                          'Tap info',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                        Text(
-                          'for details',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
       ],

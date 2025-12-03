@@ -29,10 +29,11 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<Offset> _positionAnimation;
   late Animation<double> _rotationAnimation;
-  
+
   int _currentImageIndex = 0;
   double _dragDistance = 0.0;
   bool _isSwiping = false;
+  // ignore: unused_field
   bool _showProfileButton = true;
   final double _swipeThreshold = 100.0;
   // ignore: unused_field
@@ -62,15 +63,13 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
   }
 
   void _resetAnimations() {
-    _positionAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(1.5, 0.0),
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _positionAnimation =
+        Tween<Offset>(begin: Offset.zero, end: const Offset(1.5, 0.0)).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
     _rotationAnimation = Tween<double>(begin: 0.0, end: 0.1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -142,15 +141,13 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
   }
 
   void _swipeRight() {
-    _positionAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(1.5, 0.0),
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _positionAnimation =
+        Tween<Offset>(begin: Offset.zero, end: const Offset(1.5, 0.0)).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
     _rotationAnimation = Tween<double>(begin: 0.0, end: 0.1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -160,15 +157,13 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
   }
 
   void _swipeLeft() {
-    _positionAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-1.5, 0.0),
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _positionAnimation =
+        Tween<Offset>(begin: Offset.zero, end: const Offset(-1.5, 0.0)).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
     _rotationAnimation = Tween<double>(begin: 0.0, end: -0.1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -202,50 +197,6 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
     }
   }
 
-  // 📍 Location Service Helper Methods
-  String _formatDistance(double? distance) {
-    return LocationService.formatDistance(distance);
-  }
-
-  Widget _buildDistanceBadge() {
-    if (!widget.showDistance || widget.user.distance == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Positioned(
-      top: 16,
-      left: 16,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.location_on,
-              color: Colors.white,
-              size: 14,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              _formatDistance(widget.user.distance),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildLocationInfo() {
     if (widget.user.distance == null) {
       return const SizedBox.shrink();
@@ -257,10 +208,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
         const SizedBox(width: 4),
         Text(
           '${widget.user.distance?.toStringAsFixed(1)} km away',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
         ),
       ],
     );
@@ -308,7 +256,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
     final cardHeight = widget.isSmallCard
         ? MediaQuery.of(context).size.height * 0.65
         : MediaQuery.of(context).size.height * 0.75;
-    
+
     final imageUrls = widget.user.allImageUrls;
 
     return Container(
@@ -357,7 +305,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                             child: CircularProgressIndicator(
                               value: loadingProgress.expectedTotalBytes != null
                                   ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
+                                        loadingProgress.expectedTotalBytes!
                                   : null,
                             ),
                           ),
@@ -370,8 +318,11 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.broken_image,
-                                    size: 60, color: Colors.grey),
+                                Icon(
+                                  Icons.broken_image,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
                                 const SizedBox(height: 10),
                                 Text(
                                   'Image ${index + 1}',
@@ -388,7 +339,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
               ),
             ),
           ),
-          
+
           // Gradient Overlay
           Positioned.fill(
             child: Container(
@@ -408,10 +359,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
               ),
             ),
           ),
-          
-          // Distance Badge (Top Left)
-          _buildDistanceBadge(),
-          
+
           // Profile Info (Bottom)
           Positioned(
             left: 20,
@@ -429,12 +377,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 10,
-                            color: Colors.black,
-                          ),
-                        ],
+                        shadows: [Shadow(blurRadius: 10, color: Colors.black)],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -444,32 +387,31 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                         fontSize: 32,
                         color: Colors.white,
                         fontWeight: FontWeight.w300,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 10,
-                            color: Colors.black,
-                          ),
-                        ],
+                        shadows: [Shadow(blurRadius: 10, color: Colors.black)],
                       ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Info Row
                 Row(
                   children: [
                     // Distance
                     if (widget.showDistance) _buildLocationInfo(),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // Job Title
                     if (widget.user.jobTitle.isNotEmpty)
                       Row(
                         children: [
-                          Icon(Icons.work, size: 14, color: Colors.white.withOpacity(0.8)),
+                          Icon(
+                            Icons.work,
+                            size: 14,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             widget.user.jobTitle,
@@ -481,12 +423,16 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                           const SizedBox(width: 12),
                         ],
                       ),
-                    
+
                     // School
                     if (widget.user.school.isNotEmpty)
                       Row(
                         children: [
-                          Icon(Icons.school, size: 14, color: Colors.white.withOpacity(0.8)),
+                          Icon(
+                            Icons.school,
+                            size: 14,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             widget.user.school,
@@ -499,9 +445,9 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                       ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Bio (Limited)
                 if (widget.user.bio.isNotEmpty)
                   Text(
@@ -516,9 +462,9 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Interests Chips
                 if (widget.user.interests.isNotEmpty)
                   SizedBox(
@@ -554,7 +500,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
               ],
             ),
           ),
-          
+
           // Top Controls
           Positioned(
             top: 16,
@@ -582,43 +528,12 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                
+
                 const Spacer(),
-                
-                // Profile Button (Only when not swiping)
-                if (_showProfileButton && !_isSwiping)
-                  GestureDetector(
-                    onTap: widget.onProfileTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              size: 16, color: Colors.white),
-                          SizedBox(width: 6),
-                          Text(
-                            'View Profile',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
-          
+
           // Image Navigation Arrows (Only when multiple images)
           if (imageUrls.length > 1) ...[
             // Left Arrow
@@ -646,7 +561,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-            
+
             // Right Arrow
             if (_currentImageIndex < imageUrls.length - 1)
               Positioned(
@@ -673,7 +588,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                 ),
               ),
           ],
-          
+
           // Swipe Indicator
           if (_isSwiping && _dragDistance.abs() > 50) ...[
             if (_dragDistance > 50)
@@ -704,7 +619,7 @@ class _SwipeCardState extends State<SwipeCard> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-            
+
             if (_dragDistance < -50)
               Positioned(
                 top: 50,

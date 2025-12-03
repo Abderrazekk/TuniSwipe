@@ -148,32 +148,70 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // NEW: Get all images for swipe cards (profile + media)
-userSchema.methods.getAllImages = function() {
+userSchema.methods.getAllImages = function () {
   const images = [];
-  
+
   // Add profile photo first if exists
-  if (this.photo && this.photo.trim() !== '') {
+  if (this.photo && this.photo.trim() !== "") {
     images.push({
-      type: 'profile',
+      type: "profile",
       filename: this.photo,
-      originalName: 'Profile Photo',
-      uploadDate: this.updatedAt
+      originalName: "Profile Photo",
+      uploadDate: this.updatedAt,
     });
   }
-  
+
   // Add media images
   if (this.media && this.media.length > 0) {
-    images.push(...this.media.map(media => ({
-      type: 'media',
-      ...media.toObject()
-    })));
+    images.push(
+      ...this.media.map((media) => ({
+        type: "media",
+        ...media.toObject(),
+      }))
+    );
   }
-  
+
   return images;
 };
 
-// Get user data optimized for swipe cards
-userSchema.methods.getSwipeCardData = function() {
+userSchema.methods.getAllImagesForSwipe = function () {
+  const images = [];
+
+  // Add profile photo as first image if exists
+  if (this.photo && this.photo.trim() !== "") {
+    images.push({
+      _id: "profile",
+      type: "profile",
+      filename: this.photo,
+      originalName: "Profile Photo",
+      uploadDate: this.updatedAt,
+      isProfile: true,
+    });
+  }
+
+  // Add media images in chronological order
+  if (this.media && this.media.length > 0) {
+    const sortedMedia = [...this.media].sort(
+      (a, b) => new Date(a.uploadDate) - new Date(b.uploadDate)
+    );
+
+    sortedMedia.forEach((media) => {
+      images.push({
+        _id: media._id || media.filename,
+        type: "media",
+        filename: media.filename,
+        originalName: media.originalName,
+        uploadDate: media.uploadDate,
+        isProfile: false,
+      });
+    });
+  }
+
+  return images;
+};
+
+// Get optimized data for swipe cards
+userSchema.methods.getSwipeCardData = function (distance = null) {
   return {
     _id: this._id,
     name: this.name,
@@ -181,8 +219,7 @@ userSchema.methods.getSwipeCardData = function() {
     bio: this.bio,
     gender: this.gender,
     interests: this.interests,
-    photo: this.photo,
-    media: this.media,
+    images: this.getAllImagesForSwipe(), // Use unified images
     school: this.school,
     height: this.height,
     jobTitle: this.jobTitle,
@@ -191,7 +228,8 @@ userSchema.methods.getSwipeCardData = function() {
     company: this.company,
     locationEnabled: this.locationEnabled,
     locationRadius: this.locationRadius,
-    totalImages: this.getAllImages().length
+    distance: distance,
+    totalImages: this.getAllImagesForSwipe().length,
   };
 };
 

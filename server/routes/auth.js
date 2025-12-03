@@ -43,7 +43,7 @@ router.delete("/media/:filename", authenticate, removeUserMedia);
 
 // NEW: Swipe card routes
 router.get("/user/swipe/:userId", authenticate, getUserForSwipeCard);
-router.get("/matches/potential-with-images", authenticate, getPotentialMatchesWithImages);
+router.get("/matches/potential", authenticate, getPotentialMatchesWithImages);
 
 // Location routes
 router.put("/location", authenticate, updateUserLocation);

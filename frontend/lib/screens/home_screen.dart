@@ -12,6 +12,7 @@ import 'chat_screen.dart';
 import 'profile_screen.dart';
 import '../services/location_service.dart';
 import '../widgets/location_settings_dialog.dart';
+import '../widgets/profile_detail_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -401,13 +402,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showProfileDetail(User user) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProfileDetailScreen(user: user),
-      ),
-    );
-  }
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return ProfileDetailModal(
+        user: user,
+        onClose: () {
+          Navigator.of(context).pop();
+        },
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -496,7 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
             user: currentUser,
             onSwipeLeft: _handleSwipeLeft,
             onSwipeRight: _handleSwipeRight,
-            onTap: () => _showProfileDetail(currentUser),
+            onProfileTap: () => _showProfileDetail(currentUser),
             showDistance: true,
             isSmallCard: true,
           ),

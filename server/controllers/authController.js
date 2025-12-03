@@ -773,22 +773,26 @@ const getUserMedia = async (req, res) => {
 // NEW: Get user data optimized for swipe cards
 const getUserForSwipeCard = async (req, res) => {
   const { userId } = req.params;
-  
-  console.log(`${colors.blue}🃏 Getting user data for swipe card: ${userId}${colors.reset}`);
-  
+
+  console.log(
+    `${colors.blue}🃏 Getting user data for swipe card: ${userId}${colors.reset}`
+  );
+
   try {
     const user = await User.findById(userId)
-      .select('-password -__v -createdAt -updatedAt -email -role')
+      .select("-password -__v -createdAt -updatedAt -email -role")
       .lean();
-    
+
     if (!user) {
-      console.log(`${colors.red}❌ User not found for swipe: ${userId}${colors.reset}`);
+      console.log(
+        `${colors.red}❌ User not found for swipe: ${userId}${colors.reset}`
+      );
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
-    
+
     // Format user data for swipe card
     const swipeData = {
       _id: user._id,
@@ -799,26 +803,35 @@ const getUserForSwipeCard = async (req, res) => {
       interests: user.interests,
       photo: user.photo,
       media: user.media || [],
-      school: user.school || '',
+      school: user.school || "",
       height: user.height || null,
-      jobTitle: user.jobTitle || '',
-      livingIn: user.livingIn || '',
-      topArtist: user.topArtist || '',
-      company: user.company || '',
+      jobTitle: user.jobTitle || "",
+      livingIn: user.livingIn || "",
+      topArtist: user.topArtist || "",
+      company: user.company || "",
       locationEnabled: user.locationEnabled || false,
       locationRadius: user.locationRadius || 50,
     };
-    
-    console.log(`${colors.green}✅ User data prepared for swipe card${colors.reset}`);
-    console.log(`${colors.blue}📊 Total images: ${1 + (user.media?.length || 0)}${colors.reset}`);
-    
+
+    console.log(
+      `${colors.green}✅ User data prepared for swipe card${colors.reset}`
+    );
+    console.log(
+      `${colors.blue}📊 Total images: ${1 + (user.media?.length || 0)}${
+        colors.reset
+      }`
+    );
+
     res.json({
       success: true,
       data: swipeData,
       message: "User data retrieved for swipe card",
     });
   } catch (error) {
-    console.error(`${colors.red}💥 Error getting user for swipe:${colors.reset}`, error);
+    console.error(
+      `${colors.red}💥 Error getting user for swipe:${colors.reset}`,
+      error
+    );
     res.status(500).json({
       success: false,
       message: "Error retrieving user data",
@@ -826,31 +839,33 @@ const getUserForSwipeCard = async (req, res) => {
   }
 };
 
-// NEW: Get potential matches with complete image data
 const getPotentialMatchesWithImages = async (req, res) => {
-  console.log(`${colors.blue}👥 Getting potential matches with images for: ${req.user.email}${colors.reset}`);
-  
+  console.log(
+    `${colors.blue}👥 Getting potential matches with images for: ${req.user.email}${colors.reset}`
+  );
+
   try {
     const currentUser = await User.findById(req.user._id);
-    
+
     if (!currentUser) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
-    
+
     // Build query based on location settings
     let query = {
       _id: { $ne: currentUser._id }, // Exclude current user
-      locationEnabled: true,
+      // Remove locationEnabled filter to get all users
+      // locationEnabled: true,
     };
-    
+
     // If user has location enabled, filter by distance
     if (currentUser.location && currentUser.locationEnabled) {
       const radius = currentUser.locationRadius || 50;
       const radiusInMeters = radius * 1000;
-      
+
       query.location = {
         $near: {
           $geometry: currentUser.location,
@@ -858,46 +873,130 @@ const getPotentialMatchesWithImages = async (req, res) => {
         },
       };
     }
-    
-    // Get potential matches
-    const potentialMatches = await User.find(query)
-      .select('-password -email -__v -createdAt -updatedAt')
+
+    // Get potential matches with optimized data
+    let potentialMatches = await User.find(query)
+      .select("-password -email -__v -createdAt -updatedAt")
       .lean();
-    
-    // Format matches with complete image data
-    const formattedMatches = potentialMatches.map(user => ({
-      _id: user._id,
-      name: user.name,
-      age: user.age,
-      bio: user.bio,
-      gender: user.gender,
-      interests: user.interests,
-      photo: user.photo,
-      media: user.media || [],
-      school: user.school || '',
-      height: user.height || null,
-      jobTitle: user.jobTitle || '',
-      livingIn: user.livingIn || '',
-      topArtist: user.topArtist || '',
-      company: user.company || '',
-      distance: user.distance || null,
-    }));
-    
-    console.log(`${colors.green}✅ Found ${formattedMatches.length} potential matches${colors.reset}`);
-    
+
+    // Format matches with ALL images
+    const formattedMatches = potentialMatches.map((user) => {
+      // Calculate distance if location data exists
+      let distance = null;
+      if (
+        currentUser.location &&
+        currentUser.location.coordinates &&
+        user.location &&
+        user.location.coordinates
+      ) {
+        distance = calculateDistance(
+          currentUser.location.coordinates[1], // latitude
+          currentUser.location.coordinates[0], // longitude
+          user.location.coordinates[1],
+          user.location.coordinates[0]
+        );
+      }
+
+      // Create unified images array
+      const allImages = [];
+
+      // Add profile image first
+      if (user.photo && user.photo.trim() !== "") {
+        allImages.push({
+          _id: "profile",
+          type: "profile",
+          filename: user.photo,
+          originalName: "Profile Photo",
+          isProfile: true,
+        });
+      }
+
+      // Add media images
+      if (user.media && user.media.length > 0) {
+        user.media.forEach((media) => {
+          allImages.push({
+            _id: media._id || media.filename,
+            type: "media",
+            filename: media.filename,
+            originalName: media.originalName,
+            uploadDate: media.uploadDate,
+            isProfile: false,
+          });
+        });
+      }
+
+      return {
+        _id: user._id,
+        name: user.name,
+        age: user.age,
+        bio: user.bio,
+        gender: user.gender,
+        interests: user.interests,
+        images: allImages, // Unified images array
+        school: user.school,
+        height: user.height,
+        jobTitle: user.jobTitle,
+        livingIn: user.livingIn,
+        topArtist: user.topArtist,
+        company: user.company,
+        distance: distance,
+        locationEnabled: user.locationEnabled,
+        hasImages: allImages.length > 0,
+      };
+    });
+
+    // Sort by distance if location is enabled
+    if (currentUser.locationEnabled) {
+      formattedMatches.sort((a, b) => {
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+      });
+    }
+
+    console.log(
+      `${colors.green}✅ Found ${formattedMatches.length} potential matches${colors.reset}`
+    );
+    console.log(`${colors.blue}📊 Images distribution: ${colors.reset}`);
+    formattedMatches.forEach((match, idx) => {
+      console.log(
+        `${colors.blue}   ${idx + 1}. ${match.name}: ${
+          match.images.length
+        } images${colors.reset}`
+      );
+    });
+
     res.json({
       success: true,
       data: formattedMatches,
       message: "Potential matches retrieved with complete image data",
     });
   } catch (error) {
-    console.error(`${colors.red}💥 Error getting potential matches:${colors.reset}`, error);
+    console.error(
+      `${colors.red}💥 Error getting potential matches:${colors.reset}`,
+      error
+    );
     res.status(500).json({
       success: false,
       message: "Error retrieving potential matches",
     });
   }
 };
+
+// Helper function to calculate distance
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
 
 module.exports = {
   userSignup,

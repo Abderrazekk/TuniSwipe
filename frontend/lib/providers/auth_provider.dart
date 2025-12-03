@@ -467,6 +467,7 @@ class AuthProvider with ChangeNotifier {
             livingIn: _user!.livingIn,
             topArtist: _user!.topArtist,
             company: _user!.company,
+            allImages: _user!.allImages,
             media: (responseData['data']['media'] as List).map((mediaJson) {
               return UserMedia.fromJson(mediaJson);
             }).toList(),
@@ -525,7 +526,6 @@ class AuthProvider with ChangeNotifier {
         if (responseData['success'] == true) {
           print('✅ Media removed successfully');
 
-          // FIXED: Preserve the token when updating user
           _user = User(
             id: _user!.id,
             name: _user!.name,
@@ -544,6 +544,7 @@ class AuthProvider with ChangeNotifier {
             livingIn: _user!.livingIn,
             topArtist: _user!.topArtist,
             company: _user!.company,
+            allImages: _user!.allImages,
             media: (responseData['data']['media'] as List).map((mediaJson) {
               return UserMedia.fromJson(mediaJson);
             }).toList(),
@@ -597,8 +598,6 @@ class AuthProvider with ChangeNotifier {
           print(
             '✅ Media fetched successfully: ${responseData['data']['media']}',
           );
-
-          // FIXED: Update user with media while preserving ALL other data including token
           _user = User(
             id: _user!.id,
             name: _user!.name,
@@ -617,6 +616,7 @@ class AuthProvider with ChangeNotifier {
             livingIn: _user!.livingIn,
             topArtist: _user!.topArtist,
             company: _user!.company,
+            allImages: _user!.allImages,
             media: (responseData['data']['media'] as List).map((mediaJson) {
               return UserMedia.fromJson(mediaJson);
             }).toList(),

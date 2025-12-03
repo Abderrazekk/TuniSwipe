@@ -95,10 +95,7 @@ class _BioAndInterestsWidgetState extends State<BioAndInterestsWidget> {
               child: TextField(
                 controller: widget.bioController,
                 maxLines: 5,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF1E293B),
-                ),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
                 decoration: const InputDecoration(
                   hintText: 'Tell us about yourself...',
                   hintStyle: TextStyle(
@@ -113,10 +110,7 @@ class _BioAndInterestsWidgetState extends State<BioAndInterestsWidget> {
           const SizedBox(height: 8),
           const Text(
             'Share your personality, hobbies, or what you\'re looking for',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-            ),
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
         ],
       ),
@@ -167,7 +161,7 @@ class _BioAndInterestsWidgetState extends State<BioAndInterestsWidget> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Add Interest Input
           Container(
             decoration: BoxDecoration(
@@ -206,18 +200,15 @@ class _BioAndInterestsWidgetState extends State<BioAndInterestsWidget> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 12),
           const Text(
             'Tap to add interests that describe you',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-            ),
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Interests Grid
           if (widget.interests.isNotEmpty) ...[
             Wrap(
@@ -277,18 +268,12 @@ class _BioAndInterestsWidgetState extends State<BioAndInterestsWidget> {
                   const SizedBox(height: 12),
                   const Text(
                     'No interests yet',
-                    style: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'Add interests to help others know you better',
-                    style: TextStyle(
-                      color: Color(0xFFCBD5E1),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 12),
                   ),
                 ],
               ),

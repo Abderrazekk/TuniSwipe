@@ -124,6 +124,22 @@ const userSchema = new mongoose.Schema(
       enum: ["gps", "network", "passive", "fused", null],
       default: null,
     },
+    ageFilterEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    minAgeFilter: {
+      type: Number,
+      default: 10,
+      min: 10,
+      max: 100,
+    },
+    maxAgeFilter: {
+      type: Number,
+      default: 100,
+      min: 10,
+      max: 100,
+    },
   },
   {
     timestamps: true,

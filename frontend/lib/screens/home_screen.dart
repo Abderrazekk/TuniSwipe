@@ -13,6 +13,7 @@ import 'profile_screen.dart';
 import '../services/location_service.dart';
 import '../widgets/location_settings_dialog.dart';
 import '../widgets/profile_detail_modal.dart';
+import '../widgets/age_filter_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -402,23 +403,68 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showProfileDetail(User user) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return ProfileDetailModal(
-        user: user,
-        onClose: () {
-          Navigator.of(context).pop();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return ProfileDetailModal(
+          user: user,
+          onClose: () {
+            Navigator.of(context).pop();
+          },
+        );
+      },
+    );
+  }
+
+  // NEW: Show age filter dialog
+  void _showAgeFilterDialog() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    showDialog(
+      context: context,
+      builder: (context) => AgeFilterDialog(
+        currentAgeFilterEnabled: user?.ageFilterEnabled ?? false,
+        currentMinAge: user?.minAgeFilter ?? 18,
+        currentMaxAge: user?.maxAgeFilter ?? 100,
+        onAgeFilterChanged: (enabled, minAge, maxAge) {
+          _updateAgeFilter(enabled, minAge, maxAge);
         },
+      ),
+    );
+  }
+
+  // NEW: Update age filter
+  Future<void> _updateAgeFilter(bool enabled, int minAge, int maxAge) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      await authProvider.updateAgeFilter(
+        ageFilterEnabled: enabled,
+        minAgeFilter: minAge,
+        maxAgeFilter: maxAge,
       );
-    },
-  );
-}
+
+      // Reload matches with new age filter
+      _loadPotentialMatches();
+    } catch (error) {
+      print('❌ Error updating age filter: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update age filter: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       appBar: _currentIndex == 0
           ? AppBar(
@@ -427,6 +473,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icon(Icons.location_on, color: Colors.blue, size: 20),
                   SizedBox(width: 8),
                   Text('$_currentRadius KM', style: TextStyle(fontSize: 16)),
+                  if (user?.ageFilterEnabled ?? false)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.pink[100],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${user!.minAgeFilter}-${user.maxAgeFilter}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.pink[800],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (!_locationEnabled)
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
@@ -439,6 +507,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               actions: [
+                IconButton(
+                  icon: Icon(Icons.cake, color: Colors.pink),
+                  onPressed: _showAgeFilterDialog,
+                ),
                 IconButton(
                   icon: Icon(Icons.settings, color: Colors.blue),
                   onPressed: _showLocationSettings,
@@ -459,6 +531,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSwipeScreen() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     if (_isLoading && _potentialMatches.isEmpty) {
       return const Center(
         child: Column(
@@ -510,39 +585,41 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-        Positioned(
-          bottom: 30,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildActionButton(Icons.close, Colors.red, _handleSwipeLeft, 'Dislike'),
-              _buildActionButton(
-                Icons.refresh,
-                Colors.blue,
-                _refreshLocationAndMatches,
-                'Refresh',
-              ),
-              _buildActionButton(
-                Icons.info_outline,
-                Colors.purple,
-                () => _showProfileDetail(currentUser),
-                'Profile',
-              ),
-              _buildActionButton(
-                Icons.favorite,
-                Colors.green,
-                _handleSwipeRight,
-                'Like',
-              ),
-            ],
-          ),
-        ),
-
-        if (!_locationEnabled)
+        // Age filter indicator (if enabled)
+        if (user?.ageFilterEnabled ?? false)
           Positioned(
             top: 10,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              margin: EdgeInsets.symmetric(horizontal: 60),
+              decoration: BoxDecoration(
+                color: Colors.pink.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cake, color: Colors.white, size: 14),
+                  SizedBox(width: 8),
+                  Text(
+                    'Age filter: ${user!.minAgeFilter}-${user.maxAgeFilter}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Location disabled indicator
+        if (!_locationEnabled)
+          Positioned(
+            top: (user?.ageFilterEnabled ?? false) ? 40 : 10,
             left: 0,
             right: 0,
             child: Container(
@@ -555,7 +632,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.location_off, color: Colors.white, size: 16),
+                  Icon(Icons.location_off, color: Colors.white, size: 14),
                   SizedBox(width: 8),
                   Text(
                     'Location disabled - Showing all users',
@@ -570,6 +647,49 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+        // Bottom action buttons
+        Positioned(
+          bottom: 30,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildActionButton(
+                Icons.close,
+                Colors.red,
+                _handleSwipeLeft,
+                'Dislike',
+              ),
+              _buildActionButton(
+                Icons.filter_alt,
+                Colors.purple,
+                _showAgeFilterDialog,
+                'Age Filter',
+              ),
+              _buildActionButton(
+                Icons.refresh,
+                Colors.blue,
+                _refreshLocationAndMatches,
+                'Refresh',
+              ),
+              _buildActionButton(
+                Icons.info_outline,
+                Colors.orange,
+                () => _showProfileDetail(currentUser),
+                'Profile',
+              ),
+              _buildActionButton(
+                Icons.favorite,
+                Colors.green,
+                _handleSwipeRight,
+                'Like',
+              ),
+            ],
+          ),
+        ),
+
+        // Navigation guide (hidden after 5 seconds)
         if (_showNavigationGuide)
           Positioned(
             bottom: 100,
@@ -693,6 +813,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _showAgeFilterDialog,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text('Adjust Age Filter'),
+              ),
             ],
           ),
         ),
@@ -792,12 +928,15 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       );
                     },
                   ),
-                  
+
                   Positioned(
                     top: 16,
                     right: 16,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(20),
@@ -808,7 +947,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       ),
                     ),
                   ),
-                  
+
                   if (imageUrls.length > 1)
                     Positioned(
                       left: 10,
@@ -816,7 +955,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       bottom: 0,
                       child: Center(
                         child: IconButton(
-                          icon: Icon(Icons.chevron_left, color: Colors.white, size: 40),
+                          icon: Icon(
+                            Icons.chevron_left,
+                            color: Colors.white,
+                            size: 40,
+                          ),
                           onPressed: () {
                             if (_currentImageIndex > 0) {
                               _imageController.previousPage(
@@ -828,7 +971,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         ),
                       ),
                     ),
-                  
+
                   if (imageUrls.length > 1)
                     Positioned(
                       right: 10,
@@ -836,7 +979,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       bottom: 0,
                       child: Center(
                         child: IconButton(
-                          icon: Icon(Icons.chevron_right, color: Colors.white, size: 40),
+                          icon: Icon(
+                            Icons.chevron_right,
+                            color: Colors.white,
+                            size: 40,
+                          ),
                           onPressed: () {
                             if (_currentImageIndex < imageUrls.length - 1) {
                               _imageController.nextPage(
@@ -852,7 +999,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
               ),
             ),
           ),
-          
+
           SliverList(
             delegate: SliverChildListDelegate([
               Padding(
@@ -872,16 +1019,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         SizedBox(width: 8),
                         Text(
                           '${widget.user.age}',
-                          style: TextStyle(
-                            fontSize: 28,
-                            color: Colors.black54,
-                          ),
+                          style: TextStyle(fontSize: 28, color: Colors.black54),
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     GridView.count(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
@@ -891,22 +1035,46 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       childAspectRatio: 3,
                       children: [
                         if (widget.user.jobTitle.isNotEmpty)
-                          _buildDetailItem(Icons.work, 'Job', widget.user.jobTitle),
+                          _buildDetailItem(
+                            Icons.work,
+                            'Job',
+                            widget.user.jobTitle,
+                          ),
                         if (widget.user.school.isNotEmpty)
-                          _buildDetailItem(Icons.school, 'School', widget.user.school),
+                          _buildDetailItem(
+                            Icons.school,
+                            'School',
+                            widget.user.school,
+                          ),
                         if (widget.user.livingIn.isNotEmpty)
-                          _buildDetailItem(Icons.location_on, 'Location', widget.user.livingIn),
+                          _buildDetailItem(
+                            Icons.location_on,
+                            'Location',
+                            widget.user.livingIn,
+                          ),
                         if (widget.user.company.isNotEmpty)
-                          _buildDetailItem(Icons.business, 'Company', widget.user.company),
+                          _buildDetailItem(
+                            Icons.business,
+                            'Company',
+                            widget.user.company,
+                          ),
                         if (widget.user.height != null)
-                          _buildDetailItem(Icons.height, 'Height', '${widget.user.height} cm'),
+                          _buildDetailItem(
+                            Icons.height,
+                            'Height',
+                            '${widget.user.height} cm',
+                          ),
                         if (widget.user.topArtist.isNotEmpty)
-                          _buildDetailItem(Icons.music_note, 'Top Artist', widget.user.topArtist),
+                          _buildDetailItem(
+                            Icons.music_note,
+                            'Top Artist',
+                            widget.user.topArtist,
+                          ),
                       ],
                     ),
-                    
+
                     SizedBox(height: 20),
-                    
+
                     if (widget.user.bio.isNotEmpty) ...[
                       Text(
                         'About',
@@ -922,7 +1090,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       ),
                       SizedBox(height: 20),
                     ],
-                    
+
                     if (widget.user.interests.isNotEmpty) ...[
                       Text(
                         'Interests',
@@ -953,7 +1121,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       ),
     );
   }
-  
+
   Widget _buildDetailItem(IconData icon, String title, String value) {
     return Container(
       padding: EdgeInsets.all(12),
@@ -970,16 +1138,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                Text(title, style: TextStyle(fontSize: 12, color: Colors.grey)),
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
               ],
             ),

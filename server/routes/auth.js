@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require("express");
 const { authenticate, authorizeAdmin } = require("../middleware/auth");
 const { handleUpload, handleMediaUpload } = require("../middleware/upload");
@@ -13,8 +12,9 @@ const {
   addUserMedia,
   removeUserMedia,
   getUserMedia,
-  getUserForSwipeCard, // NEW
-  getPotentialMatchesWithImages, // NEW
+  getUserForSwipeCard,
+  getPotentialMatchesWithImages,
+  updateAgeFilter,
 } = require("../controllers/authController");
 const {
   updateUserLocation,
@@ -23,6 +23,7 @@ const {
   toggleLocationEnabled,
   getUsersWithinRadius,
 } = require("../controllers/locationController");
+const Swipe = require("../models/Swipe");
 
 const router = express.Router();
 
@@ -51,6 +52,8 @@ router.put("/location/radius", authenticate, updateLocationRadius);
 router.put("/location/toggle", authenticate, toggleLocationEnabled);
 router.get("/location/settings", authenticate, getLocationSettings);
 router.get("/location/nearby", authenticate, getUsersWithinRadius);
+
+router.put("/age-filter", authenticate, updateAgeFilter);
 
 // Admin routes
 router.get("/admin/stats", authenticate, authorizeAdmin, getAdminStats);

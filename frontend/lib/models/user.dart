@@ -18,7 +18,11 @@ class User {
   final String topArtist;
   final String company;
   final double? distance;
-  final List<ProfileImage> allImages; // NEW: Unified images list
+  final List<ProfileImage> allImages;
+  // NEW: Age filter fields
+  final bool ageFilterEnabled;
+  final int minAgeFilter;
+  final int maxAgeFilter;
 
   User({
     required this.id,
@@ -39,7 +43,10 @@ class User {
     this.topArtist = '',
     this.company = '',
     this.distance,
-    required this.allImages, // REQUIRED: Unified images
+    required this.allImages,
+    this.ageFilterEnabled = false,
+    this.minAgeFilter = 10,
+    this.maxAgeFilter = 100,
   });
 
   // NEW: Get all image URLs (from unified images list)
@@ -142,7 +149,9 @@ class User {
     // Log image information
     print('📊 Image Summary:');
     print('   Total unified images: ${parsedAllImages.length}');
-    print('   Profile image: ${parsedAllImages.isNotEmpty ? parsedAllImages.first.filename : "none"}');
+    print(
+      '   Profile image: ${parsedAllImages.isNotEmpty ? parsedAllImages.first.filename : "none"}',
+    );
     print('   Media count: ${parsedMedia.length}');
 
     return User(
@@ -165,27 +174,32 @@ class User {
       company: json['company']?.toString() ?? '',
       distance: parsedDistance,
       allImages: parsedAllImages, // Use unified images
+      ageFilterEnabled: json['ageFilterEnabled'] ?? false,
+      minAgeFilter: json['minAgeFilter'] is int ? json['minAgeFilter'] : 10,
+      maxAgeFilter: json['maxAgeFilter'] is int ? json['maxAgeFilter'] : 100,
     );
   }
 
   // Helper method to parse legacy format (profile + separate media)
   static List<ProfileImage> _parseLegacyImages(Map<String, dynamic> json) {
     final images = <ProfileImage>[];
-    
+
     // Add profile photo as first image
     String profilePhoto = '';
     if (json['photo'] != null && json['photo'].toString().isNotEmpty) {
       profilePhoto = json['photo'].toString();
     }
-    
+
     if (profilePhoto.isNotEmpty) {
-      images.add(ProfileImage(
-        id: 'profile_${DateTime.now().millisecondsSinceEpoch}',
-        filename: profilePhoto,
-        type: 'profile',
-        isProfile: true,
-        uploadDate: DateTime.now(),
-      ));
+      images.add(
+        ProfileImage(
+          id: 'profile_${DateTime.now().millisecondsSinceEpoch}',
+          filename: profilePhoto,
+          type: 'profile',
+          isProfile: true,
+          uploadDate: DateTime.now(),
+        ),
+      );
       print('📸 Added profile image: $profilePhoto');
     }
 
@@ -193,14 +207,16 @@ class User {
     if (json['media'] != null && json['media'] is List) {
       final mediaList = json['media'] as List;
       print('🖼️ Found ${mediaList.length} media items');
-      
+
       for (var mediaJson in mediaList) {
         try {
-          images.add(ProfileImage.fromJson({
-            ...mediaJson,
-            'type': 'media',
-            'isProfile': false,
-          }));
+          images.add(
+            ProfileImage.fromJson({
+              ...mediaJson,
+              'type': 'media',
+              'isProfile': false,
+            }),
+          );
         } catch (e) {
           print('❌ Error parsing media item: $e');
         }
@@ -238,17 +254,21 @@ class User {
             },
           )
           .toList(),
-      'images': allImages // NEW: Include unified images
-          .map(
-            (img) => {
-              'id': img.id,
-              'filename': img.filename,
-              'type': img.type,
-              'isProfile': img.isProfile,
-              'uploadDate': img.uploadDate.toIso8601String(),
-            },
-          )
-          .toList(),
+      'images':
+          allImages // NEW: Include unified images
+              .map(
+                (img) => {
+                  'id': img.id,
+                  'filename': img.filename,
+                  'type': img.type,
+                  'isProfile': img.isProfile,
+                  'uploadDate': img.uploadDate.toIso8601String(),
+                },
+              )
+              .toList(),
+      'ageFilterEnabled': ageFilterEnabled,
+      'minAgeFilter': minAgeFilter,
+      'maxAgeFilter': maxAgeFilter,
     };
   }
 
@@ -272,6 +292,9 @@ class User {
     String? company,
     double? distance,
     List<ProfileImage>? allImages, // NEW
+    bool? ageFilterEnabled,
+    int? minAgeFilter,
+    int? maxAgeFilter,
   }) {
     return User(
       id: id ?? this.id,
@@ -293,6 +316,9 @@ class User {
       company: company ?? this.company,
       distance: distance ?? this.distance,
       allImages: allImages ?? this.allImages, // NEW
+      ageFilterEnabled: ageFilterEnabled ?? this.ageFilterEnabled,
+      minAgeFilter: minAgeFilter ?? this.minAgeFilter,
+      maxAgeFilter: maxAgeFilter ?? this.maxAgeFilter,
     );
   }
 
@@ -429,7 +455,8 @@ class User {
     String profilePhoto = '';
     if (json['photo'] != null && json['photo'].toString().isNotEmpty) {
       profilePhoto = json['photo'].toString();
-    } else if (json['mainPhoto'] != null && json['mainPhoto'].toString().isNotEmpty) {
+    } else if (json['mainPhoto'] != null &&
+        json['mainPhoto'].toString().isNotEmpty) {
       profilePhoto = json['mainPhoto'].toString();
     } else if (parsedAllImages.isNotEmpty) {
       // Use first image from unified list
@@ -524,7 +551,7 @@ class ProfileImage {
   final String type; // 'profile' or 'media'
   final bool isProfile;
   final DateTime uploadDate;
-  
+
   ProfileImage({
     required this.id,
     required this.filename,
@@ -532,12 +559,13 @@ class ProfileImage {
     this.isProfile = false,
     required this.uploadDate,
   });
-  
+
   factory ProfileImage.fromJson(Map<String, dynamic> json) {
     return ProfileImage(
-      id: json['id']?.toString() ?? 
-          json['_id']?.toString() ?? 
-          json['filename']?.toString() ?? 
+      id:
+          json['id']?.toString() ??
+          json['_id']?.toString() ??
+          json['filename']?.toString() ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       filename: json['filename']?.toString() ?? '',
       type: json['type']?.toString() ?? 'media',
@@ -547,9 +575,9 @@ class ProfileImage {
           : DateTime.now(),
     );
   }
-  
+
   String get imageUrl => 'http://10.0.2.2:5000/uploads/$filename';
-  
+
   // Convert to map for serialization
   Map<String, dynamic> toJson() {
     return {
@@ -560,7 +588,7 @@ class ProfileImage {
       'uploadDate': uploadDate.toIso8601String(),
     };
   }
-  
+
   @override
   String toString() {
     return 'ProfileImage(id: $id, filename: $filename, type: $type, isProfile: $isProfile)';
@@ -579,7 +607,7 @@ class SwipeCardData {
   final String school;
   final String livingIn;
   final double? distance;
-  
+
   SwipeCardData({
     required this.userId,
     required this.name,
@@ -592,7 +620,7 @@ class SwipeCardData {
     required this.livingIn,
     this.distance,
   });
-  
+
   factory SwipeCardData.fromUser(User user) {
     return SwipeCardData(
       userId: user.id,

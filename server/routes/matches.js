@@ -40,14 +40,16 @@ const getPotentialMatches = async (req, res) => {
     const currentUserId = req.user._id;
     const currentUser = await User.findById(currentUserId);
 
-    console.log(`${colors.blue}🎯 Potential matches for: ${currentUser.email}${colors.reset}`);
-    console.log(`${colors.blue}   Location enabled: ${currentUser.locationEnabled}${colors.reset}`);
-    console.log(`${colors.blue}   Location radius: ${currentUser.locationRadius} KM${colors.reset}`);
+    console.log(
+      `${colors.blue}🎯 Potential matches for: ${currentUser.email}${colors.reset}`
+    );
 
+    // Get already-swiped users
     const userSwipes = await Swipe.find({ swiper: currentUserId });
     const swipedUserIds = userSwipes.map((swipe) => swipe.swiped.toString());
     swipedUserIds.push(currentUserId.toString());
 
+    // Determine target gender based on current user's gender
     let targetGender;
     if (currentUser.gender === "male") {
       targetGender = "female";
@@ -57,18 +59,20 @@ const getPotentialMatches = async (req, res) => {
       targetGender = { $in: ["male", "female"] };
     }
 
+    // Build query with proper exclusions
     const query = {
       _id: { $nin: swipedUserIds },
+      gender: targetGender, // Add gender filter
     };
 
-    if (targetGender) {
-      query.gender = targetGender;
-    }
-
     // Location filtering
-    if (currentUser.location && currentUser.locationEnabled && currentUser.locationRadius > 0) {
+    if (
+      currentUser.location &&
+      currentUser.locationEnabled &&
+      currentUser.locationRadius > 0
+    ) {
       const maxDistance = currentUser.locationRadius;
-      
+
       query.location = {
         $near: {
           $geometry: {
@@ -80,37 +84,50 @@ const getPotentialMatches = async (req, res) => {
       };
       query.locationEnabled = true;
 
-      console.log(`${colors.blue}📍 Filtering by location: ${maxDistance} KM${colors.reset}`);
+      console.log(
+        `${colors.blue}📍 Filtering by location: ${maxDistance} KM${colors.reset}`
+      );
     } else if (currentUser.locationRadius === 0) {
-      console.log(`${colors.yellow}📍 Radius is 0 - showing all users${colors.reset}`);
+      console.log(
+        `${colors.yellow}📍 Radius is 0 - showing all users${colors.reset}`
+      );
     } else {
-      console.log(`${colors.yellow}⚠️ Location filtering disabled${colors.reset}`);
+      console.log(
+        `${colors.yellow}⚠️ Location filtering disabled${colors.reset}`
+      );
     }
 
     const potentialMatches = await User.find(query)
-      .select("name email photo age gender bio interests school jobTitle livingIn height topArtist company location")
+      .select(
+        "name email photo age gender bio interests school jobTitle livingIn height topArtist company location"
+      )
       .limit(30);
 
     const matchesWithDetails = await Promise.all(
       potentialMatches.map(async (user) => {
         const userObj = user.toObject();
-        
+
         if (currentUser.location && user.location) {
           const [lon1, lat1] = currentUser.location.coordinates;
           const [lon2, lat2] = user.location.coordinates;
           userObj.distance = calculateDistance(lat1, lon1, lat2, lon2);
         }
-        
+
         const userWithMedia = await User.findById(user._id).select("media");
-        userObj.mainPhoto = userWithMedia.media && userWithMedia.media.length > 0
-          ? userWithMedia.media[0].filename
-          : user.photo;
+        userObj.mainPhoto =
+          userWithMedia.media && userWithMedia.media.length > 0
+            ? userWithMedia.media[0].filename
+            : user.photo;
 
         return userObj;
       })
     );
 
-    if (currentUser.location && currentUser.locationEnabled && currentUser.locationRadius > 0) {
+    if (
+      currentUser.location &&
+      currentUser.locationEnabled &&
+      currentUser.locationRadius > 0
+    ) {
       matchesWithDetails.sort((a, b) => {
         if (a.distance && b.distance) {
           return a.distance - b.distance;
@@ -119,24 +136,29 @@ const getPotentialMatches = async (req, res) => {
       });
     }
 
-    console.log(`${colors.green}✅ Found ${matchesWithDetails.length} matches${colors.reset}`);
+    console.log(
+      `${colors.green}✅ Found ${matchesWithDetails.length} matches${colors.reset}`
+    );
 
     res.json({
       success: true,
       data: matchesWithDetails,
       currentUserRadius: currentUser.locationRadius,
-      locationFiltering: currentUser.locationEnabled && currentUser.locationRadius > 0,
+      locationFiltering:
+        currentUser.locationEnabled && currentUser.locationRadius > 0,
       message: "Potential matches retrieved successfully",
     });
   } catch (error) {
-    console.error(`${colors.red}💥 Get matches error:${colors.reset}`, error.message);
+    console.error(
+      `${colors.red}💥 Get matches error:${colors.reset}`,
+      error.message
+    );
     res.status(500).json({
       success: false,
       message: "Error retrieving potential matches",
     });
   }
 };
-
 /**
  * Handle swipe action
  */
@@ -145,7 +167,9 @@ const handleSwipe = async (req, res) => {
     const { targetUserId, action } = req.body;
     const currentUserId = req.user._id;
 
-    console.log(`${colors.blue}💕 Swipe: ${action} by ${currentUserId} on ${targetUserId}${colors.reset}`);
+    console.log(
+      `${colors.blue}💕 Swipe: ${action} by ${currentUserId} on ${targetUserId}${colors.reset}`
+    );
 
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) {
@@ -224,17 +248,25 @@ const getMutualMatches = async (req, res) => {
   try {
     const currentUserId = req.user._id;
 
-    console.log(`${colors.blue}💑 Getting matches for: ${currentUserId}${colors.reset}`);
+    console.log(
+      `${colors.blue}💑 Getting matches for: ${currentUserId}${colors.reset}`
+    );
 
     const userLikes = await Swipe.find({
       swiper: currentUserId,
       action: "like",
-    }).populate("swiped", "name email photo age gender bio interests school jobTitle livingIn");
+    }).populate(
+      "swiped",
+      "name email photo age gender bio interests school jobTitle livingIn"
+    );
 
     const likedByUsers = await Swipe.find({
       swiped: currentUserId,
       action: "like",
-    }).populate("swiper", "name email photo age gender bio interests school jobTitle livingIn");
+    }).populate(
+      "swiper",
+      "name email photo age gender bio interests school jobTitle livingIn"
+    );
 
     const matches = [];
 
@@ -245,7 +277,9 @@ const getMutualMatches = async (req, res) => {
 
       if (mutualLike) {
         const matchedUser = like.swiped.toObject();
-        const matchedUserWithMedia = await User.findById(matchedUser._id).select("media");
+        const matchedUserWithMedia = await User.findById(
+          matchedUser._id
+        ).select("media");
 
         matchedUser.mainPhoto =
           matchedUserWithMedia.media && matchedUserWithMedia.media.length > 0
@@ -260,7 +294,9 @@ const getMutualMatches = async (req, res) => {
       }
     }
 
-    console.log(`${colors.green}✅ Found ${matches.length} mutual matches${colors.reset}`);
+    console.log(
+      `${colors.green}✅ Found ${matches.length} mutual matches${colors.reset}`
+    );
 
     res.json({
       success: true,
@@ -270,7 +306,10 @@ const getMutualMatches = async (req, res) => {
       message: "Mutual matches retrieved successfully",
     });
   } catch (error) {
-    console.error(`${colors.red}💥 Get matches error:${colors.reset}`, error.message);
+    console.error(
+      `${colors.red}💥 Get matches error:${colors.reset}`,
+      error.message
+    );
     res.status(500).json({
       success: false,
       message: "Error retrieving matches",
@@ -285,12 +324,17 @@ const getUsersWhoLikedMe = async (req, res) => {
   try {
     const currentUserId = req.user._id;
 
-    console.log(`${colors.blue}💖 Getting users who liked: ${currentUserId}${colors.reset}`);
+    console.log(
+      `${colors.blue}💖 Getting users who liked: ${currentUserId}${colors.reset}`
+    );
 
     const likes = await Swipe.find({
       swiped: currentUserId,
       action: "like",
-    }).populate("swiper", "name email photo age gender bio interests school jobTitle livingIn");
+    }).populate(
+      "swiper",
+      "name email photo age gender bio interests school jobTitle livingIn"
+    );
 
     const nonMutualLikes = [];
 
@@ -318,7 +362,9 @@ const getUsersWhoLikedMe = async (req, res) => {
       }
     }
 
-    console.log(`${colors.green}✅ Returning ${nonMutualLikes.length} likes${colors.reset}`);
+    console.log(
+      `${colors.green}✅ Returning ${nonMutualLikes.length} likes${colors.reset}`
+    );
 
     res.json({
       success: true,
@@ -328,7 +374,10 @@ const getUsersWhoLikedMe = async (req, res) => {
       message: "Likes retrieved successfully",
     });
   } catch (error) {
-    console.error(`${colors.red}💥 Get likes error:${colors.reset}`, error.message);
+    console.error(
+      `${colors.red}💥 Get likes error:${colors.reset}`,
+      error.message
+    );
     res.status(500).json({
       success: false,
       message: "Error retrieving likes",

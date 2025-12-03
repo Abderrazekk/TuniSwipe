@@ -24,7 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadCompleteProfile() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
-    
+
     if (user != null && (user.age == 0 || user.gender.isEmpty)) {
       setState(() {
         _isLoading = true;
@@ -75,10 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
               const Text(
                 'Loading your profile...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF64748B),
-                ),
+                style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
               ),
             ],
           ),
@@ -165,10 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: _profilePhotoSize,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 4,
-                            ),
+                            border: Border.all(color: Colors.white, width: 4),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.2),
@@ -182,8 +176,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ? Image.network(
                                     'http://10.0.2.2:5000/uploads/${user.photo}',
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        _buildDefaultAvatar(),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            _buildDefaultAvatar(),
                                   )
                                 : _buildDefaultAvatar(),
                           ),
@@ -315,44 +310,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               const SizedBox(height: 24),
-
-              // Stats Cards
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.photo_library_outlined,
-                        value: user?.media.length.toString() ?? '0',
-                        label: 'Photos',
-                        color: const Color(0xFF3B82F6),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.tag_outlined,
-                        value: user?.interests.length.toString() ?? '0',
-                        label: 'Interests',
-                        color: const Color(0xFFF59E0B),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildStatCard(
-                        icon: Icons.person_outline,
-                        value: 'Member',
-                        label: 'Status',
-                        color: const Color(0xFF10B981),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
               // Bio Section
               if (user?.bio != null && user!.bio.isNotEmpty)
                 Padding(
@@ -542,10 +499,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             final interest = entry.value;
                             return Container(
                               decoration: BoxDecoration(
-                                color: _getInterestColor(index).withOpacity(0.1),
+                                color: _getInterestColor(
+                                  index,
+                                ).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: _getInterestColor(index).withOpacity(0.2),
+                                  color: _getInterestColor(
+                                    index,
+                                  ).withOpacity(0.2),
                                 ),
                               ),
                               child: Padding(
@@ -636,52 +597,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    // Share Profile Button
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: () {
-                            // Share profile functionality
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.share_outlined,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Share Profile',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
                     // Logout Button
                     Container(
                       width: double.infinity,
@@ -735,77 +650,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-
-      // Floating Action Button for Quick Edit
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const EditProfileScreen(),
-            ),
-          );
-        },
-        backgroundColor: const Color(0xFF7C3AED),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(Icons.edit_outlined),
-      ),
-    );
-  }
-
-  Widget _buildStatCard({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -824,11 +668,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 16,
-            ),
+            Icon(icon, color: color, size: 16),
             const SizedBox(width: 6),
             Text(
               text,
@@ -848,11 +688,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       color: Colors.white.withOpacity(0.1),
       child: const Center(
-        child: Icon(
-          Icons.person,
-          size: 60,
-          color: Colors.white70,
-        ),
+        child: Icon(Icons.person, size: 60, color: Colors.white70),
       ),
     );
   }
@@ -909,10 +745,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Text(
                   'Are you sure you want to logout from your account?',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF64748B),
-                  ),
+                  style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 24),
                 Row(

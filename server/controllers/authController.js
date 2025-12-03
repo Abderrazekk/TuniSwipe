@@ -1,6 +1,7 @@
 const { generateToken } = require("../utils/generateToken");
 const User = require("../models/User");
 const Admin = require("../models/Admin");
+const Swipe = require("../models/Swipe"); // <-- ADD THIS LINE
 const path = require("path");
 
 // Color codes for console logs
@@ -854,12 +855,38 @@ const getPotentialMatchesWithImages = async (req, res) => {
       });
     }
 
-    // Build query based on location settings
+    // Get already-swiped users
+    const userSwipes = await Swipe.find({ swiper: currentUser._id });
+    const swipedUserIds = userSwipes.map((swipe) => swipe.swiped.toString());
+    swipedUserIds.push(currentUser._id.toString()); // Exclude self
+
+    // Determine target gender based on current user's gender
+    let targetGender;
+    if (currentUser.gender === "male") {
+      targetGender = "female";
+    } else if (currentUser.gender === "female") {
+      targetGender = "male";
+    } else {
+      // If gender is "other", show both male and female
+      targetGender = { $in: ["male", "female"] };
+    }
+
+    // Build query with gender filtering
     let query = {
-      _id: { $ne: currentUser._id }, // Exclude current user
-      // Remove locationEnabled filter to get all users
-      // locationEnabled: true,
+      _id: { $nin: swipedUserIds }, // Exclude already-swiped users AND self
+      gender: targetGender, // Add gender filter
     };
+
+    // Add age filter if enabled
+    if (currentUser.ageFilterEnabled) {
+      query.age = {
+        $gte: currentUser.minAgeFilter,
+        $lte: currentUser.maxAgeFilter,
+      };
+      console.log(
+        `${colors.blue}🎂 Age filter: ${currentUser.minAgeFilter} - ${currentUser.maxAgeFilter}${colors.reset}`
+      );
+    }
 
     // If user has location enabled, filter by distance
     if (currentUser.location && currentUser.locationEnabled) {
@@ -872,6 +899,10 @@ const getPotentialMatchesWithImages = async (req, res) => {
           $maxDistance: radiusInMeters,
         },
       };
+      query.locationEnabled = true;
+    } else {
+      // If location disabled, still get all users but exclude swiped ones
+      query.locationEnabled = { $in: [true, false] };
     }
 
     // Get potential matches with optimized data
@@ -957,12 +988,23 @@ const getPotentialMatchesWithImages = async (req, res) => {
     console.log(
       `${colors.green}✅ Found ${formattedMatches.length} potential matches${colors.reset}`
     );
+    console.log(
+      `${colors.blue}🎯 Gender filter: ${currentUser.gender} → ${targetGender}${colors.reset}`
+    );
+    console.log(
+      `${colors.blue}🎂 Age filter: ${
+        currentUser.ageFilterEnabled
+          ? `${currentUser.minAgeFilter}-${currentUser.maxAgeFilter}`
+          : "Disabled"
+      }${colors.reset}`
+    );
+
     console.log(`${colors.blue}📊 Images distribution: ${colors.reset}`);
     formattedMatches.forEach((match, idx) => {
       console.log(
-        `${colors.blue}   ${idx + 1}. ${match.name}: ${
-          match.images.length
-        } images${colors.reset}`
+        `${colors.blue}   ${idx + 1}. ${match.name} (${match.age}, ${
+          match.gender
+        }): ${match.images.length} images${colors.reset}`
       );
     });
 
@@ -998,6 +1040,88 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
+/**
+ * Update Age Filter Settings Controller
+ */
+const updateAgeFilter = async (req, res) => {
+  console.log(
+    `${colors.blue}🎂 Updating age filter for: ${req.user.email}${colors.reset}`
+  );
+
+  try {
+    const { ageFilterEnabled, minAgeFilter, maxAgeFilter } = req.body;
+
+    console.log(`${colors.blue}📦 Age filter update data:${colors.reset}`);
+    console.log(`${colors.blue}   Enabled: ${ageFilterEnabled}${colors.reset}`);
+    console.log(`${colors.blue}   Min Age: ${minAgeFilter}${colors.reset}`);
+    console.log(`${colors.blue}   Max Age: ${maxAgeFilter}${colors.reset}`);
+
+    // Validate age range
+    const minAge = parseInt(minAgeFilter);
+    const maxAge = parseInt(maxAgeFilter);
+
+    if (isNaN(minAge) || isNaN(maxAge)) {
+      console.log(`${colors.red}❌ Invalid age values${colors.reset}`);
+      return res.status(400).json({
+        success: false,
+        message: "Invalid age values",
+      });
+    }
+
+    if (minAge < 18 || maxAge > 100 || minAge > maxAge) {
+      console.log(`${colors.red}❌ Invalid age range${colors.reset}`);
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid age range. Min must be 18+, Max 100 or less, and Min <= Max",
+      });
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          ageFilterEnabled: ageFilterEnabled,
+          minAgeFilter: minAge,
+          maxAgeFilter: maxAge,
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    console.log(
+      `${colors.green}✅ Age filter updated successfully${colors.reset}`
+    );
+    console.log(
+      `${colors.blue}   New settings: ${
+        updatedUser.ageFilterEnabled
+          ? `${updatedUser.minAgeFilter}-${updatedUser.maxAgeFilter}`
+          : "Disabled"
+      }${colors.reset}`
+    );
+
+    res.json({
+      success: true,
+      data: {
+        ageFilterEnabled: updatedUser.ageFilterEnabled,
+        minAgeFilter: updatedUser.minAgeFilter,
+        maxAgeFilter: updatedUser.maxAgeFilter,
+      },
+      message: "Age filter updated successfully",
+    });
+  } catch (error) {
+    console.error(
+      `${colors.red}💥 Age filter update error:${colors.reset}`,
+      error.message
+    );
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   userSignup,
   userSignin,
@@ -1011,4 +1135,5 @@ module.exports = {
   getUserMedia,
   getUserForSwipeCard, // NEW
   getPotentialMatchesWithImages, // NEW
+  updateAgeFilter,
 };

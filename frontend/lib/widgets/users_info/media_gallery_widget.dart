@@ -66,7 +66,7 @@ class MediaGalleryWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Progress bar
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,13 +79,12 @@ class MediaGalleryWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: progress >= 1 
+                      color: progress >= 1
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF475569),
                     ),
                   ),
-                  if (canAddMore && !isLoading)
-                    _buildAddButton(),
+                  if (canAddMore && !isLoading) _buildAddButton(),
                 ],
               ),
               const SizedBox(height: 8),
@@ -111,9 +110,9 @@ class MediaGalleryWidget extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Media grid or empty state
           if (user?.media != null && user!.media.isNotEmpty)
             GridView.builder(
@@ -210,10 +209,7 @@ class MediaGalleryWidget extends StatelessWidget {
                   ? 'Add up to 6 photos to showcase your personality'
                   : 'You\'ve reached the maximum of 6 photos',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
             ),
           ),
           const SizedBox(height: 20),
@@ -221,7 +217,10 @@ class MediaGalleryWidget extends StatelessWidget {
             InkWell(
               onTap: onPickMediaImages,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
@@ -280,7 +279,7 @@ class MediaGalleryWidget extends StatelessWidget {
                       strokeWidth: 2,
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                     ),
                   ),
@@ -315,10 +314,7 @@ class MediaGalleryWidget extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.4),
-                      Colors.transparent,
-                    ],
+                    colors: [Colors.black.withOpacity(0.4), Colors.transparent],
                   ),
                 ),
                 child: Align(

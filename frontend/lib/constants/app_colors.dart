@@ -11,7 +11,7 @@ class AppColors {
   static const Color border = Color(0xFFE2E8F0); // Light border
   static const Color error = Color(0xFFEF4444); // Red
   static const Color success = Color(0xFF10B981); // Green
-  
+
   // Gradient
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],

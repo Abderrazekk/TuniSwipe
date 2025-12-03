@@ -642,4 +642,78 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateAgeFilter({
+    required bool ageFilterEnabled,
+    required int minAgeFilter,
+    required int maxAgeFilter,
+    BuildContext? context,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final currentToken = _user!.token;
+
+      if (currentToken.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      print('🎂 Updating age filter settings');
+      print('   Enabled: $ageFilterEnabled');
+      print('   Min Age: $minAgeFilter');
+      print('   Max Age: $maxAgeFilter');
+
+      final response = await http.put(
+        Uri.parse('http://10.0.2.2:5000/api/auth/age-filter'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $currentToken',
+        },
+        body: json.encode({
+          'ageFilterEnabled': ageFilterEnabled,
+          'minAgeFilter': minAgeFilter,
+          'maxAgeFilter': maxAgeFilter,
+        }),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        print('✅ Age filter updated successfully');
+
+        // Update the user in the provider WITH TOKEN PRESERVED
+        _user = _user!.copyWith(
+          ageFilterEnabled: ageFilterEnabled,
+          minAgeFilter: minAgeFilter,
+          maxAgeFilter: maxAgeFilter,
+        );
+        await _saveUser(_user!.toJson());
+        notifyListeners();
+
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                ageFilterEnabled
+                    ? 'Age filter set to $minAgeFilter-$maxAgeFilter'
+                    : 'Age filter disabled',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception(
+          responseData['message'] ?? 'Failed to update age filter',
+        );
+      }
+    } catch (error) {
+      print('❌ Age filter update error: $error');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

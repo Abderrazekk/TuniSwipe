@@ -66,10 +66,7 @@ class _SignUpStep1ScreenState extends State<SignUpStep1Screen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Step 1 of 2: Enter your basic details',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
                 Form(
@@ -177,7 +174,10 @@ class _SignUpStep1ScreenState extends State<SignUpStep1Screen> {
                           const Text("Already have an account?"),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/signin');
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/signin',
+                              );
                             },
                             child: const Text(
                               'Sign In',

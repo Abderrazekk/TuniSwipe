@@ -1,4 +1,3 @@
-// screens/likes_screen.dart - Replace with safer implementation
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -8,6 +7,8 @@ import '../models/user.dart';
 import '../models/like.dart';
 import 'chat_screen.dart';
 import '../providers/chat_provider.dart';
+import '../widgets/profile_detail_modal.dart'; // Import the modern profile modal
+import '../constants/app_colors.dart'; // Import AppColors
 
 class LikesScreen extends StatefulWidget {
   const LikesScreen({super.key});
@@ -29,6 +30,7 @@ class _LikesScreenState extends State<LikesScreen> {
     _fetchLikesAndMatches();
   }
 
+  // Keep all your existing API functions exactly as they are
   Future<void> _fetchLikesAndMatches() async {
     try {
       setState(() {
@@ -129,202 +131,14 @@ class _LikesScreenState extends State<LikesScreen> {
     }
   }
 
-  Widget _buildErrorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 80, color: Colors.red),
-            const SizedBox(height: 20),
-            Text(
-              'Error Loading Data',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _errorMessage ?? 'Unknown error occurred',
-              style: TextStyle(fontSize: 16, color: Colors.grey[500]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _fetchLikesAndMatches,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showUserProfile(User user) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildProfileDetailSheet(user),
-    );
-  }
-
-  Widget _buildProfileDetailSheet(User user) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header with image
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(25),
-                  topRight: Radius.circular(25),
-                ),
-                image: DecorationImage(
-                  image: _getProfileImage(user),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-
-            // Profile details
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Name and Age
-                  Row(
-                    children: [
-                      Text(
-                        user.name,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${user.age}',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Basic info
-                  if (user.jobTitle.isNotEmpty || user.livingIn.isNotEmpty)
-                    Row(
-                      children: [
-                        if (user.jobTitle.isNotEmpty) ...[
-                          Icon(Icons.work, size: 16, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
-                          Text(
-                            user.jobTitle,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                        if (user.livingIn.isNotEmpty &&
-                            user.jobTitle.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: Container(
-                              width: 4,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        if (user.livingIn.isNotEmpty) ...[
-                          Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            user.livingIn,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  // Bio
-                  if (user.bio.isNotEmpty) ...[
-                    const Text(
-                      'About',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      user.bio,
-                      style: const TextStyle(fontSize: 16, height: 1.4),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // Interests
-                  if (user.interests.isNotEmpty) ...[
-                    const Text(
-                      'Interests',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: user.interests.map((interest) {
-                        return Chip(
-                          label: Text(interest),
-                          backgroundColor: Colors.blue[50],
-                          labelStyle: TextStyle(color: Colors.blue[700]),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
+      builder: (context) => ProfileDetailModal(
+        user: user,
+        onClose: () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -345,14 +159,34 @@ class _LikesScreenState extends State<LikesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Likes & Matches'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        title: Text(
+          'Connections',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.refresh_rounded,
+                color: AppColors.primary,
+                size: 24,
+              ),
+            ),
             onPressed: _fetchLikesAndMatches,
           ),
         ],
@@ -360,40 +194,11 @@ class _LikesScreenState extends State<LikesScreen> {
       body: _errorMessage != null
           ? _buildErrorState()
           : _isLoading
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 20),
-                  Text(
-                    'Loading likes and matches...',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
+          ? _buildLoadingState()
           : Column(
               children: [
-                // Tab Bar
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey[300]!),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildTabButton('Likes', 0, _likes.length),
-                      ),
-                      Expanded(
-                        child: _buildTabButton('Matches', 1, _matches.length),
-                      ),
-                    ],
-                  ),
-                ),
+                // Modern Tab Bar
+                _buildModernTabBar(),
 
                 // Content
                 Expanded(
@@ -406,43 +211,155 @@ class _LikesScreenState extends State<LikesScreen> {
     );
   }
 
-  Widget _buildTabButton(String title, int tabIndex, int count) {
+  Widget _buildModernTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildModernTabButton(
+              'Likes',
+              0,
+              _likes.length,
+              Icons.favorite_border_rounded,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildModernTabButton(
+              'Matches',
+              1,
+              _matches.length,
+              Icons.people_alt_rounded,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernTabButton(
+    String title,
+    int tabIndex,
+    int count,
+    IconData icon,
+  ) {
     final isSelected = _currentTab == tabIndex;
-    return TextButton(
-      onPressed: () {
+    return GestureDetector(
+      onTap: () {
         setState(() {
           _currentTab = tabIndex;
         });
       },
-      style: TextButton.styleFrom(
-        backgroundColor: isSelected ? Colors.pink : Colors.transparent,
-        shape: const RoundedRectangleBorder(),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black54,
-              fontWeight: FontWeight.bold,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          gradient: isSelected ? AppColors.primaryGradient : null,
+          color: isSelected ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.white : Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              count.toString(),
-              style: TextStyle(
-                color: isSelected ? Colors.pink : Colors.black54,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white
+                    : AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(
+                strokeWidth: 4,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Loading Connections',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Finding people who like you...',
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -452,20 +369,23 @@ class _LikesScreenState extends State<LikesScreen> {
   Widget _buildLikesTab() {
     if (_likes.isEmpty) {
       return _buildEmptyState(
-        icon: Icons.favorite_border,
+        icon: Icons.favorite_outline_rounded,
         title: 'No Likes Yet',
-        message: "When someone likes you, they'll appear here.",
+        message: "When someone likes you,\nthey'll appear here.",
+        gradientColors: [Color(0xFFFEE2E2), Color(0xFFFECACA)],
       );
     }
 
     return RefreshIndicator(
+      backgroundColor: AppColors.background,
+      color: AppColors.primary,
       onRefresh: _fetchLikesAndMatches,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         itemCount: _likes.length,
         itemBuilder: (context, index) {
           final like = _likes[index];
-          return _buildLikeCard(like, false);
+          return _buildModernLikeCard(like, false);
         },
       ),
     );
@@ -474,238 +394,526 @@ class _LikesScreenState extends State<LikesScreen> {
   Widget _buildMatchesTab() {
     if (_matches.isEmpty) {
       return _buildEmptyState(
-        icon: Icons.people_outline,
+        icon: Icons.people_outline_rounded,
         title: 'No Matches Yet',
-        message: "When you and someone like each other, it's a match!",
+        message: "When you and someone\nlike each other, it's a match!",
+        gradientColors: [Color(0xFFD1FAE5), Color(0xFFA7F3D0)],
       );
     }
 
     return RefreshIndicator(
+      backgroundColor: AppColors.background,
+      color: AppColors.primary,
       onRefresh: _fetchLikesAndMatches,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         itemCount: _matches.length,
         itemBuilder: (context, index) {
           final match = _matches[index];
-          return _buildLikeCard(match, true);
+          return _buildModernLikeCard(match, true);
         },
       ),
     );
   }
 
-  Widget _buildLikeCard(Like like, bool isMatch) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 2,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Stack(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundImage: _getProfileImage(like.user),
-            ),
-            if (isMatch)
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.pink,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    size: 12,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        title: Row(
-          children: [
-            Text(
-              like.user.name,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '${like.user.age}',
-              style: const TextStyle(fontSize: 18, color: Colors.black54),
-            ),
-            if (isMatch) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.pink[50],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.pink),
-                ),
-                child: const Text(
-                  'MATCH',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.pink,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (like.user.jobTitle.isNotEmpty || like.user.livingIn.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  [
-                    like.user.jobTitle,
-                    like.user.livingIn,
-                  ].where((text) => text.isNotEmpty).join(' • '),
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _timeAgo(like.likedAt),
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-              ),
-            ),
-          ],
-        ),
-        trailing: isMatch
-            ? IconButton(
-                icon: const Icon(Icons.chat, color: Colors.pink),
-                onPressed: () {
-                  print('💬 Start chat with ${like.user.name}');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(otherUser: like.user),
-                    ),
-                  );
-                },
-              )
-            : IconButton(
-                icon: const Icon(Icons.favorite, color: Colors.grey),
-                onPressed: () {
-                  _likeBack(like);
-                },
-              ),
-        onTap: () => _showUserProfile(like.user),
-      ),
-    );
-  }
-
-  Future<void> _likeBack(Like like) async {
-  try {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final token = authProvider.user?.token;
-
-    if (token == null) {
-      throw Exception('No authentication token');
-    }
-
-    print('❤️ Liking back ${like.user.name}');
-
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:5000/api/auth/matches/swipe'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({'targetUserId': like.user.id, 'action': 'like'}),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to like back: ${response.statusCode}');
-    }
-
-    final responseData = json.decode(response.body);
-
-    if (responseData['success'] == true) {
-      final isMatch = responseData['data']['isMatch'] == true;
-
-      if (isMatch) {
-        // Force refresh the chat conversations to include the new match
-        await chatProvider.getConversations();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('🎉 It\'s a match with ${like.user.name}!'),
-            backgroundColor: Colors.pink,
-            duration: const Duration(seconds: 3),
+  Widget _buildModernLikeCard(Like like, bool isMatch) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-        );
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _showUserProfile(like.user),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Profile Image with Badge
+                Stack(
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        image: DecorationImage(
+                          image: _getProfileImage(like.user),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    if (isMatch)
+                      Positioned(
+                        top: -4,
+                        right: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.primaryGradient,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.favorite_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
 
-        setState(() {
-          _likes.removeWhere((l) => l.user.id == like.user.id);
-          _matches.insert(0, Like(user: like.user, likedAt: DateTime.now()));
-          _currentTab = 1;
-        });
+                const SizedBox(width: 16),
 
-        print('✅ User ${like.user.name} moved from likes to matches');
-        
-        // Show option to start chatting
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showMatchSuccessDialog(like.user);
-        });
-      }
-    } else {
-      throw Exception(responseData['message'] ?? 'Failed to like back');
-    }
-  } catch (error) {
-    print('❌ Error liking back: $error');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to like back: ${error.toString()}'),
-        backgroundColor: Colors.red,
+                // User Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            like.user.name,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${like.user.age}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          if (isMatch) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.primaryGradient,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'MATCH',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      // Job and Location
+                      if (like.user.jobTitle.isNotEmpty ||
+                          like.user.livingIn.isNotEmpty)
+                        Row(
+                          children: [
+                            if (like.user.jobTitle.isNotEmpty)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.work_outline_rounded,
+                                    size: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    like.user.jobTitle,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            if (like.user.jobTitle.isNotEmpty &&
+                                like.user.livingIn.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: Container(
+                                  width: 3,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.textSecondary.withOpacity(
+                                      0.5,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            if (like.user.livingIn.isNotEmpty)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    like.user.livingIn,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+
+                      const SizedBox(height: 6),
+
+                      // Time ago
+                      Text(
+                        _timeAgo(like.likedAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Action Button
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: isMatch
+                        ? AppColors.primary.withOpacity(0.1)
+                        : AppColors.accent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      isMatch
+                          ? Icons.chat_bubble_outline_rounded
+                          : Icons.favorite_outline_rounded,
+                      color: isMatch ? AppColors.primary : AppColors.accent,
+                      size: 24,
+                    ),
+                    onPressed: isMatch
+                        ? () {
+                            print('💬 Start chat with ${like.user.name}');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ChatScreen(otherUser: like.user),
+                              ),
+                            );
+                          }
+                        : () {
+                            _likeBack(like);
+                          },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
-}
+
+  // Keep all your existing _likeBack function exactly as it is
+  Future<void> _likeBack(Like like) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      final token = authProvider.user?.token;
+
+      if (token == null) {
+        throw Exception('No authentication token');
+      }
+
+      print('❤️ Liking back ${like.user.name}');
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:5000/api/auth/matches/swipe'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({'targetUserId': like.user.id, 'action': 'like'}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to like back: ${response.statusCode}');
+      }
+
+      final responseData = json.decode(response.body);
+
+      if (responseData['success'] == true) {
+        final isMatch = responseData['data']['isMatch'] == true;
+
+        if (isMatch) {
+          // Force refresh the chat conversations to include the new match
+          await chatProvider.getConversations();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('🎉 It\'s a match with ${like.user.name}!'),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+
+          setState(() {
+            _likes.removeWhere((l) => l.user.id == like.user.id);
+            _matches.insert(0, Like(user: like.user, likedAt: DateTime.now()));
+            _currentTab = 1;
+          });
+
+          print('✅ User ${like.user.name} moved from likes to matches');
+
+          // Show option to start chatting
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showMatchSuccessDialog(like.user);
+          });
+        }
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to like back');
+      }
+    } catch (error) {
+      print('❌ Error liking back: $error');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to like back: ${error.toString()}'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
 
   void _showMatchSuccessDialog(User user) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('It\'s a Match! 🎉'),
-          content: Text(
-            'You and ${user.name} have liked each other! Start chatting now.',
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Later'),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary.withOpacity(0.1), Colors.white],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: BorderRadius.circular(24),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(otherUser: user),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    shape: BoxShape.circle,
                   ),
-                );
-              },
-              child: const Text('Chat Now'),
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    size: 40,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'It\'s a Match! 🎉',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You and ${user.name} have liked each other!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          backgroundColor: AppColors.background,
+                        ),
+                        child: Text(
+                          'Later',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(otherUser: user),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          backgroundColor: AppColors.primary,
+                        ),
+                        child: const Text(
+                          'Chat Now',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: 60,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Connection Issue',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage ?? 'Unable to load connections',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _fetchLikesAndMatches,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Try Again',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -713,8 +921,11 @@ class _LikesScreenState extends State<LikesScreen> {
     required IconData icon,
     required String title,
     required String message,
+    required List<Color> gradientColors,
   }) {
     return RefreshIndicator(
+      backgroundColor: AppColors.background,
+      color: AppColors.primary,
       onRefresh: _fetchLikesAndMatches,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -726,21 +937,58 @@ class _LikesScreenState extends State<LikesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 20),
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: gradientColors,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 50, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     title,
                     style: TextStyle(
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
                     message,
-                    style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  OutlinedButton(
+                    onPressed: _fetchLikesAndMatches,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: BorderSide(color: AppColors.primary),
+                    ),
+                    child: Text(
+                      'Refresh',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),

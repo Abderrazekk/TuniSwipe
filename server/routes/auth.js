@@ -124,5 +124,5 @@ router.get("/debug/matches", authenticate, async (req, res) => {
     });
   }
 });
-
+// End debug route
 module.exports = router;

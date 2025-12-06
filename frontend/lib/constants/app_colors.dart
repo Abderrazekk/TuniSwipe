@@ -127,3 +127,5 @@ class AppColors {
 //AppColors.shadowMedium
 //AppColors.glassBackground
 //AppColors.glassBorder
+//AppColors.shimmerBase
+//AppColors.shimmerHighlight

@@ -7,6 +7,7 @@ import '../models/user.dart';
 import '../widgets/users_info/personal_info_widget.dart';
 import '../widgets/users_info/bio_interests_widget.dart';
 import '../widgets/users_info/media_gallery_widget.dart';
+import '../constants/app_colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -160,10 +161,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  color: AppColors.secondary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.camera_alt, color: Color(0xFF10B981)),
+                child: const Icon(Icons.camera_alt, color: AppColors.secondary),
               ),
               title: const Text('Take a Photo'),
               onTap: () {
@@ -226,7 +227,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Text('Added ${pickedFiles.length} photo(s)'),
                 ],
               ),
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: AppColors.secondary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -277,7 +278,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         Text('Photo removed'),
                       ],
                     ),
-                    backgroundColor: Color(0xFF10B981),
+                    backgroundColor: AppColors.secondary,
                   ),
                 );
               } catch (error) {
@@ -288,7 +289,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             },
             child: const Text(
               'Remove',
-              style: TextStyle(color: Color(0xFFEF4444)),
+              style: TextStyle(color: AppColors.error),
             ),
           ),
         ],
@@ -354,7 +355,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 child: const Icon(
                   Icons.check,
-                  color: Color(0xFF10B981),
+                  color: AppColors.secondary,
                   size: 16,
                 ),
               ),
@@ -365,7 +366,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: AppColors.secondary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -399,7 +400,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               child: const Icon(
                 Icons.error_outline,
-                color: Color(0xFFEF4444),
+                color: AppColors.error,
                 size: 16,
               ),
             ),
@@ -411,7 +412,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: Color(0xFF7C3AED))),
+            child: const Text('OK', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -423,7 +424,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = Provider.of<AuthProvider>(context).user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -462,7 +463,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const Spacer(),
@@ -474,7 +475,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Color(0xFF7C3AED)),
+                          valueColor: AlwaysStoppedAnimation(AppColors.primary),
                         ),
                       ),
                     )
@@ -484,7 +485,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF7C3AED),
+                          color: AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -550,7 +551,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _saveProfile,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7C3AED),
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 32,
@@ -625,7 +626,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 4),
+                  border: Border.all(color: AppColors.border, width: 4),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -656,7 +657,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7C3AED),
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 4),
                       boxShadow: [
@@ -690,7 +691,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       child: const Icon(
                         Icons.close,
-                        color: Color(0xFFEF4444),
+                        color: AppColors.error,
                         size: 16,
                       ),
                     ),
@@ -703,7 +704,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _selectedImage != null
                 ? 'New photo selected'
                 : 'Tap to change photo',
-            style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -712,7 +713,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildDefaultAvatar() {
     return Container(
-      color: const Color(0xFFF8FAFC),
+      color: AppColors.background,
       child: const Center(
         child: Icon(Icons.person, size: 48, color: Color(0xFFCBD5E1)),
       ),

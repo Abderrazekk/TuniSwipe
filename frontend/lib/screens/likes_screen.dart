@@ -5,7 +5,7 @@ import 'dart:convert';
 import '../providers/auth_provider.dart';
 import '../models/user.dart';
 import '../models/like.dart';
-import 'chat_screen.dart';
+import 'conversations_screen.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/profile_detail_modal.dart'; // Import the modern profile modal
 import '../constants/app_colors.dart'; // Import AppColors
@@ -160,43 +160,13 @@ class _LikesScreenState extends State<LikesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          'Connections',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.refresh_rounded,
-                color: AppColors.primary,
-                size: 24,
-              ),
-            ),
-            onPressed: _fetchLikesAndMatches,
-          ),
-        ],
-      ),
       body: _errorMessage != null
           ? _buildErrorState()
           : _isLoading
           ? _buildLoadingState()
           : Column(
               children: [
+                const SizedBox(height: 35),
                 // Modern Tab Bar
                 _buildModernTabBar(),
 
@@ -511,28 +481,6 @@ class _LikesScreenState extends State<LikesScreen> {
                               ),
                             ),
                           ),
-                          if (isMatch) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.primaryGradient,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'MATCH',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
 
@@ -642,7 +590,7 @@ class _LikesScreenState extends State<LikesScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    ChatScreen(otherUser: like.user),
+                                    ConversationsScreen(),
                               ),
                             );
                           }
@@ -822,7 +770,7 @@ class _LikesScreenState extends State<LikesScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ChatScreen(otherUser: user),
+                              builder: (context) => ConversationsScreen(),
                             ),
                           );
                         },

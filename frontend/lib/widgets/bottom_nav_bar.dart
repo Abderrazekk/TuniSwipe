@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
@@ -14,87 +15,70 @@ class BottomNavBar extends StatefulWidget {
   State<BottomNavBar> createState() => _BottomNavBarState();
 }
 
-class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  // ignore: unused_field
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _handleTap(int index) {
-    _animationController.forward().then((_) {
-      _animationController.reverse();
-      widget.onTap(index);
-    });
-  }
-
+class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
+            color: AppColors.primary.withOpacity(0.15),
+            blurRadius: 30,
+            spreadRadius: 2,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
             spreadRadius: 1,
-            offset: const Offset(0, -5),
+            offset: const Offset(0, 5),
           ),
         ],
+        border: Border.all(
+          color: AppColors.border.withOpacity(0.3),
+          width: 1,
+        ),
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
+        borderRadius: BorderRadius.circular(25),
         child: Container(
-          color: Colors.white,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.surface,
+                AppColors.surface.withOpacity(0.95),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildAnimatedNavItem(
+                _buildNavItem(
                   icon: Icons.home_outlined,
                   activeIcon: Icons.home,
                   label: 'Home',
                   index: 0,
                 ),
-                _buildAnimatedNavItem(
+                _buildNavItem(
                   icon: Icons.favorite_border,
                   activeIcon: Icons.favorite,
                   label: 'Likes',
                   index: 1,
                 ),
-                _buildAnimatedNavItem(
+                _buildNavItem(
                   icon: Icons.chat_bubble_outline,
                   activeIcon: Icons.chat,
                   label: 'Chat',
                   index: 2,
                 ),
-                _buildAnimatedNavItem(
+                _buildNavItem(
                   icon: Icons.person_outline,
                   activeIcon: Icons.person,
                   label: 'Profile',
@@ -108,7 +92,7 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildAnimatedNavItem({
+  Widget _buildNavItem({
     required IconData icon,
     required IconData activeIcon,
     required String label,
@@ -117,50 +101,114 @@ class _BottomNavBarState extends State<BottomNavBar> with SingleTickerProviderSt
     final bool isSelected = widget.currentIndex == index;
 
     return GestureDetector(
-      onTap: () => _handleTap(index),
+      onTap: () => widget.onTap(index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primary.withOpacity(0.08),
+                    AppColors.primary.withOpacity(0.04),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : null,
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.primary.withOpacity(0.2),
+                  width: 1.5,
+                )
+              : null,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              transitionBuilder: (child, animation) {
-                return ScaleTransition(
-                  scale: animation,
-                  child: child,
-                );
-              },
-              child: Icon(
-                isSelected ? activeIcon : icon,
-                key: ValueKey(isSelected ? 'active_$index' : 'inactive_$index'),
-                color: isSelected ? Colors.blue : Colors.black.withOpacity(0.6),
-                size: isSelected ? 26 : 24,
-              ),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Background glow effect for selected state
+                if (isSelected)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOut,
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary.withOpacity(0.1),
+                    ),
+                  ),
+                
+                // Icon with smooth transition
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: Tween<double>(begin: 0.6, end: 1.0)
+                          .animate(animation),
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.9, end: 1.0)
+                            .animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Icon(
+                    isSelected ? activeIcon : icon,
+                    key: ValueKey(isSelected ? 'active_$index' : 'inactive_$index'),
+                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    size: isSelected ? 24 : 22,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              width: isSelected ? 20 : 0,
-              height: 2,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 6),
+            
+            // Text with smooth transition
             AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
               style: TextStyle(
-                color: isSelected ? Colors.blue : Colors.black.withOpacity(0.6),
-                fontSize: isSelected ? 14 : 12,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                fontSize: isSelected ? 13 : 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                letterSpacing: isSelected ? 0.3 : 0,
               ),
-              child: Text(label),
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            
+            // Subtle underline indicator
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+              margin: const EdgeInsets.only(top: 4),
+              width: isSelected ? 20 : 0,
+              height: isSelected ? 3 : 0,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(2),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.5),
+                          blurRadius: 4,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
             ),
           ],
         ),

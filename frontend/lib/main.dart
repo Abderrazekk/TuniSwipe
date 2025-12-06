@@ -8,7 +8,7 @@ import 'screens/signup_step1_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin/dashboard_screen.dart';
 import 'screens/likes_screen.dart';
-import 'screens/chat_screen.dart';
+import 'screens/Conversations_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/edit_profile.dart';
 import 'models/user.dart';
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
           '/home': (context) => const HomeScreen(),
           '/dashboard': (context) => const DashboardScreen(),
           '/likes': (context) => const LikesScreen(),
-          '/chat': (context) => const ChatScreen(),
+          '/chat': (context) => const ConversationsScreen(),
           '/profile': (context) => const ProfileScreen(),
           '/edit_profile': (context) => const EditProfileScreen(),
         },

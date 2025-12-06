@@ -5,16 +5,16 @@ import '../providers/chat_provider.dart';
 import '../models/user.dart';
 import '../models/message.dart';
 
-class ChatScreen extends StatefulWidget {
-  final User? otherUser;
+class ChatRoomScreen extends StatefulWidget {
+  final User otherUser;
 
-  const ChatScreen({super.key, this.otherUser});
+  const ChatRoomScreen({super.key, required this.otherUser});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isTyping = false;
@@ -32,7 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    print('🚀 Initializing chat screen...');
+    print('🚀 Initializing chat room screen...');
 
     // Ensure chat provider has the current user data
     if (authProvider.user != null) {
@@ -46,26 +46,21 @@ class _ChatScreenState extends State<ChatScreen> {
       chatProvider.initializeSocket();
     }
 
-    if (widget.otherUser != null) {
-      // Load chat history and join room
-      _loadChatHistory(chatProvider);
-    } else {
-      // Load conversations list
-      _loadConversations(chatProvider);
-    }
+    // Load chat history and join room
+    _loadChatHistory(chatProvider);
 
     _isInitialized = true;
   }
 
   void _loadChatHistory(ChatProvider chatProvider) {
     chatProvider
-        .getChatHistory(widget.otherUser!.id)
+        .getChatHistory(widget.otherUser.id)
         .then((_) {
           // Wait a bit for socket to be ready, then join room
           Future.delayed(const Duration(milliseconds: 500), () {
             if (chatProvider.isConnected) {
-              chatProvider.joinChatRoom(widget.otherUser!.id);
-              print('✅ Joined chat room with ${widget.otherUser!.name}');
+              chatProvider.joinChatRoom(widget.otherUser.id);
+              print('✅ Joined chat room with ${widget.otherUser.name}');
             } else {
               print('❌ Socket not connected, cannot join room');
             }
@@ -75,12 +70,6 @@ class _ChatScreenState extends State<ChatScreen> {
         .catchError((error) {
           print('❌ Error loading chat history: $error');
         });
-  }
-
-  void _loadConversations(ChatProvider chatProvider) {
-    chatProvider.getConversations().catchError((error) {
-      print('❌ Error loading conversations: $error');
-    });
   }
 
   void _scrollToBottom() {
@@ -97,12 +86,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     final message = _messageController.text.trim();
-    if (message.isEmpty || widget.otherUser == null) return;
+    if (message.isEmpty) return;
 
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
 
     if (chatProvider.isSocketReady()) {
-      chatProvider.sendMessage(widget.otherUser!.id, message);
+      chatProvider.sendMessage(widget.otherUser.id, message);
       _messageController.clear();
       _scrollToBottom();
     } else {
@@ -187,179 +176,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-Widget _buildConversationsList() {
-  final chatProvider = Provider.of<ChatProvider>(context);
-
-  return RefreshIndicator(
-    onRefresh: () async {
-      await chatProvider.getConversations();
-    },
-    child: chatProvider.conversations.isEmpty
-        ? _buildEmptyConversationsState()
-        : ListView.builder(
-            itemCount: chatProvider.conversations.length,
-            itemBuilder: (context, index) {
-              final conversation = chatProvider.conversations[index];
-              final otherUser = conversation['otherUser'];
-              final lastMessage = conversation['lastMessage'];
-              final unreadCount = conversation['unreadCount'] ?? 0;
-              final isMatchWithoutMessages = conversation['isMatchWithoutMessages'] ?? false;
-
-              String lastMessageText = 'No messages yet';
-              String lastMessageTime = 'Just matched';
-              
-              if (lastMessage != null) {
-                lastMessageText = lastMessage['message'] ?? 'No messages yet';
-                final messageDate = DateTime.parse(lastMessage['createdAt']);
-                lastMessageTime = _formatLastMessageTime(messageDate);
-              } else if (isMatchWithoutMessages) {
-                lastMessageText = 'Start the conversation!';
-              }
-
-              return ListTile(
-                leading: CircleAvatar(
-                  radius: 25,
-                  backgroundImage: NetworkImage(
-                    'http://10.0.2.2:5000/uploads/${otherUser['mainPhoto'] ?? otherUser['photo']}',
-                  ),
-                ),
-                title: Text(
-                  otherUser['name'],
-                  style: TextStyle(
-                    fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      lastMessageText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
-                        color: lastMessage == null ? Colors.grey : null,
-                        fontStyle: lastMessage == null ? FontStyle.italic : FontStyle.normal,
-                      ),
-                    ),
-                    Text(
-                      lastMessageTime,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: unreadCount > 0
-                    ? Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          unreadCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : isMatchWithoutMessages
-                        ? Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.pink[50],
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.pink),
-                            ),
-                            child: Icon(
-                              Icons.favorite,
-                              size: 16,
-                              color: Colors.pink,
-                            ),
-                          )
-                        : null,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(
-                        otherUser: User.fromJson(otherUser),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-  );
-}
-
-Widget _buildEmptyConversationsState() {
-  return SingleChildScrollView(
-    physics: const AlwaysScrollableScrollPhysics(),
-    child: Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey[400]),
-              const SizedBox(height: 20),
-              Text(
-                'No conversations yet',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 15),
-              Text(
-                'When you match with someone, they will appear here automatically.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[500]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 25),
-              ElevatedButton(
-                onPressed: () {
-                  final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-                  chatProvider.getConversations();
-                },
-                child: const Text('Refresh'),
-              ),
-              const SizedBox(height: 15),
-              TextButton(
-                onPressed: () {
-                  // Navigate to likes screen to see matches
-                  Navigator.pushNamed(context, '/likes');
-                },
-                child: const Text('View Your Matches'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-  String _formatLastMessageTime(DateTime messageDate) {
-    final now = DateTime.now();
-    final difference = now.difference(messageDate);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
-
   Widget _buildChatScreen() {
     final chatProvider = Provider.of<ChatProvider>(context);
 
@@ -383,12 +199,12 @@ Widget _buildEmptyConversationsState() {
               CircleAvatar(
                 radius: 20,
                 backgroundImage: NetworkImage(
-                  'http://10.0.2.2:5000/uploads/${widget.otherUser!.photo}',
+                  'http://10.0.2.2:5000/uploads/${widget.otherUser.photo}',
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                widget.otherUser!.name,
+                widget.otherUser.name,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -455,7 +271,7 @@ Widget _buildEmptyConversationsState() {
                       context,
                       listen: false,
                     );
-                    final roomId = _getRoomId(widget.otherUser!.id);
+                    final roomId = _getRoomId(widget.otherUser.id);
 
                     if (value.isNotEmpty && !_isTyping) {
                       _isTyping = true;
@@ -512,35 +328,27 @@ Widget _buildEmptyConversationsState() {
 
     return Scaffold(
       appBar: AppBar(
-        title: widget.otherUser != null
-            ? Row(
-                children: [
-                  CircleAvatar(
-                    radius: 15,
-                    backgroundImage: NetworkImage(
-                      'http://10.0.2.2:5000/uploads/${widget.otherUser!.photo}',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(widget.otherUser!.name),
-                  if (!chatProvider.isConnected) ...[
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.signal_wifi_off,
-                      size: 16,
-                      color: Colors.red,
-                    ),
-                  ],
-                ],
-              )
-            : const Text('Messages'),
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 15,
+              backgroundImage: NetworkImage(
+                'http://10.0.2.2:5000/uploads/${widget.otherUser.photo}',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(widget.otherUser.name),
+            if (!chatProvider.isConnected) ...[
+              const SizedBox(width: 8),
+              const Icon(Icons.signal_wifi_off, size: 16, color: Colors.red),
+            ],
+          ],
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: widget.otherUser != null
-          ? _buildChatScreen()
-          : _buildConversationsList(),
+      body: _buildChatScreen(),
     );
   }
 

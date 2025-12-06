@@ -129,3 +129,4 @@ class AppColors {
 //AppColors.glassBorder
 //AppColors.shimmerBase
 //AppColors.shimmerHighlight
+// etc.

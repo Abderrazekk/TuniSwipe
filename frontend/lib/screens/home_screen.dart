@@ -419,18 +419,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _currentIndex == 0
-          ? HomeAppBar(
-              currentRadius: _currentRadius,
-              locationEnabled: _locationEnabled,
-              onAgeFilterPressed: _showAgeFilterDialog,
-              onLocationSettingsPressed: _showLocationSettings,
-            )
-          : null,
-      body: _currentIndex == 0
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    extendBody: true, // This is key! Allows body to extend behind navigation bar
+    appBar: _currentIndex == 0
+        ? HomeAppBar(
+            currentRadius: _currentRadius,
+            locationEnabled: _locationEnabled,
+            onAgeFilterPressed: _showAgeFilterDialog,
+            onLocationSettingsPressed: _showLocationSettings,
+          )
+        : null,
+    body: Container(
+      // Add a container to ensure content doesn't go behind navbar
+      margin: EdgeInsets.only(bottom: 70), // Reserve space for nav bar
+      child: _currentIndex == 0
           ? SwipeScreen(
               potentialMatches: _potentialMatches,
               isLoading: _isLoading,
@@ -457,16 +461,18 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             )
           : _screens[_currentIndex],
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      ),
-    );
-  }
+    ),
+    bottomNavigationBar: BottomNavBar(
+      currentIndex: _currentIndex,
+      onTap: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+    ),
+  );
+}
+
 }
 
 class HomeTab extends StatelessWidget {

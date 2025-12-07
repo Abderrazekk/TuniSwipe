@@ -71,45 +71,11 @@ class _AgeFilterDialogState extends State<AgeFilterDialog> {
                 ),
               ],
             ),
-            
+
             SizedBox(height: _ageFilterEnabled ? 24 : 0),
-            
+
             // Age Range Sliders (only show when enabled)
             if (_ageFilterEnabled) ...[
-              Text(
-                'Age Range',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Set the age range you want to see',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              
-              SizedBox(height: 20),
-              
-              // Age Range Display
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.pink[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.pink[100]!),
-                ),
-                child: Center(
-                  child: Text(
-                    '$_minAge - $_maxAge years',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pink[800],
-                    ),
-                  ),
-                ),
-              ),
-              
-              SizedBox(height: 24),
-              
               // Minimum Age Slider
               Text(
                 'Minimum Age: $_minAge',
@@ -132,9 +98,9 @@ class _AgeFilterDialogState extends State<AgeFilterDialog> {
                 activeColor: Colors.pink,
                 inactiveColor: Colors.grey[300],
               ),
-              
+
               SizedBox(height: 24),
-              
+
               // Maximum Age Slider
               Text(
                 'Maximum Age: $_maxAge',
@@ -157,31 +123,9 @@ class _AgeFilterDialogState extends State<AgeFilterDialog> {
                 activeColor: Colors.pink,
                 inactiveColor: Colors.grey[300],
               ),
-              
+
               SizedBox(height: 16),
-              
-              // Quick Age Presets
-              Text(
-                'Quick Settings:',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              SizedBox(height: 12),
-              
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildAgePreset(10, 25),
-                  _buildAgePreset(10, 35),
-                  _buildAgePreset(10, 50),
-                  _buildAgePreset(25, 35),
-                  _buildAgePreset(25, 50),
-                  _buildAgePreset(30, 45),
-                ],
-              ),
-              
-              SizedBox(height: 16),
-              
+
               // Reset to Default Button
               ElevatedButton(
                 onPressed: () {
@@ -226,10 +170,7 @@ class _AgeFilterDialogState extends State<AgeFilterDialog> {
                     SizedBox(height: 8),
                     Text(
                       'Enable the filter to set an age range for potential matches',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -245,27 +186,6 @@ class _AgeFilterDialogState extends State<AgeFilterDialog> {
           child: Text('Close'),
         ),
       ],
-    );
-  }
-
-  Widget _buildAgePreset(int min, int max) {
-    final isSelected = _minAge == min && _maxAge == max;
-    return FilterChip(
-      label: Text('$min-$max'),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _minAge = min;
-          _maxAge = max;
-        });
-        _updateAgeFilter();
-      },
-      backgroundColor: Colors.grey[100],
-      selectedColor: Colors.pink[100],
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.pink : Colors.grey[700],
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
     );
   }
 }

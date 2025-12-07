@@ -64,9 +64,9 @@ class _LocationSettingsDialogState extends State<LocationSettingsDialog> {
                 ),
               ],
             ),
-            
+
             SizedBox(height: 24),
-            
+
             Text(
               'Search Radius',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -76,9 +76,9 @@ class _LocationSettingsDialogState extends State<LocationSettingsDialog> {
               'Set how far away you want to see people',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            
+
             SizedBox(height: 16),
-            
+
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               decoration: BoxDecoration(
@@ -96,25 +96,29 @@ class _LocationSettingsDialogState extends State<LocationSettingsDialog> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  
+
                   Slider(
                     value: _radius.toDouble(),
                     min: 0,
                     max: 150,
                     divisions: 15,
                     label: '$_radius KM',
-                    onChanged: _enabled ? (value) {
-                      setState(() {
-                        _radius = value.round();
-                      });
-                    } : null,
-                    onChangeEnd: _enabled ? (value) {
-                      widget.onRadiusChanged(value.round());
-                    } : null,
+                    onChanged: _enabled
+                        ? (value) {
+                            setState(() {
+                              _radius = value.round();
+                            });
+                          }
+                        : null,
+                    onChangeEnd: _enabled
+                        ? (value) {
+                            widget.onRadiusChanged(value.round());
+                          }
+                        : null,
                     activeColor: Colors.blue,
                     inactiveColor: Colors.grey[300],
                   ),
-                  
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -127,61 +131,6 @@ class _LocationSettingsDialogState extends State<LocationSettingsDialog> {
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-            
-            SizedBox(height: 16),
-            
-            Text(
-              'Quick Settings:',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            SizedBox(height: 12),
-            
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [0, 10, 25, 50, 100, 150].map((radius) {
-                return FilterChip(
-                  label: Text('$radius KM'),
-                  selected: _radius == radius,
-                  onSelected: _enabled ? (selected) {
-                    setState(() {
-                      _radius = radius;
-                    });
-                    widget.onRadiusChanged(radius);
-                  } : null,
-                  backgroundColor: Colors.grey[100],
-                  selectedColor: Colors.blue[100],
-                  labelStyle: TextStyle(
-                    color: _radius == radius ? Colors.blue : Colors.grey[700],
-                  ),
-                );
-              }).toList(),
-            ),
-            
-            SizedBox(height: 16),
-            
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info, color: Colors.blue, size: 18),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Set to 0 KM to see everyone regardless of location',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue[800],
-                      ),
-                    ),
                   ),
                 ],
               ),

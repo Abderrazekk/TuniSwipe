@@ -19,72 +19,81 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      // Remove ALL margins - this is the key fix!
+      // No margin means no extra space
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.15),
-            blurRadius: 30,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 1,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(
-          color: AppColors.border.withOpacity(0.3),
-          width: 1,
-        ),
+        // Make the container itself transparent except for the actual bar
+        color: Colors.transparent,
+        // Remove any border or shadow from the main container
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
+      // Add a safe area only at the bottom
+      child: SafeArea(
+        top: false,
+        bottom: true,
         child: Container(
+          // Now add margin only to position the visible bar
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.surface,
-                AppColors.surface.withOpacity(0.95),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.15),
+                blurRadius: 30,
+                spreadRadius: 2,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                spreadRadius: 1,
+                offset: const Offset(0, 5),
+              ),
+            ],
+            border: Border.all(color: AppColors.border.withOpacity(0.3), width: 1),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildNavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
-                  label: 'Home',
-                  index: 0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
-                _buildNavItem(
-                  icon: Icons.favorite_border,
-                  activeIcon: Icons.favorite,
-                  label: 'Likes',
-                  index: 1,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildNavItem(
+                      icon: Icons.home_outlined,
+                      activeIcon: Icons.home,
+                      label: 'Home',
+                      index: 0,
+                    ),
+                    _buildNavItem(
+                      icon: Icons.favorite_border,
+                      activeIcon: Icons.favorite,
+                      label: 'Likes',
+                      index: 1,
+                    ),
+                    _buildNavItem(
+                      icon: Icons.chat_bubble_outline,
+                      activeIcon: Icons.chat,
+                      label: 'Chat',
+                      index: 2,
+                    ),
+                    _buildNavItem(
+                      icon: Icons.person_outline,
+                      activeIcon: Icons.person,
+                      label: 'Profile',
+                      index: 3,
+                    ),
+                  ],
                 ),
-                _buildNavItem(
-                  icon: Icons.chat_bubble_outline,
-                  activeIcon: Icons.chat,
-                  label: 'Chat',
-                  index: 2,
-                ),
-                _buildNavItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  label: 'Profile',
-                  index: 3,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -147,32 +156,40 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       color: AppColors.primary.withOpacity(0.1),
                     ),
                   ),
-                
+
                 // Icon with smooth transition
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   transitionBuilder: (child, animation) {
                     return FadeTransition(
-                      opacity: Tween<double>(begin: 0.6, end: 1.0)
-                          .animate(animation),
+                      opacity: Tween<double>(
+                        begin: 0.6,
+                        end: 1.0,
+                      ).animate(animation),
                       child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.9, end: 1.0)
-                            .animate(animation),
+                        scale: Tween<double>(
+                          begin: 0.9,
+                          end: 1.0,
+                        ).animate(animation),
                         child: child,
                       ),
                     );
                   },
                   child: Icon(
                     isSelected ? activeIcon : icon,
-                    key: ValueKey(isSelected ? 'active_$index' : 'inactive_$index'),
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    key: ValueKey(
+                      isSelected ? 'active_$index' : 'inactive_$index',
+                    ),
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                     size: isSelected ? 24 : 22,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            
+
             // Text with smooth transition
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 300),
@@ -183,12 +200,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 letterSpacing: isSelected ? 0.3 : 0,
               ),
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(label, overflow: TextOverflow.ellipsis),
             ),
-            
+
             // Subtle underline indicator
             AnimatedContainer(
               duration: const Duration(milliseconds: 400),

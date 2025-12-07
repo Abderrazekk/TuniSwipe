@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/swipe_card.dart';
 import 'action_button.dart';
 import 'empty_state_widget.dart';
+import '../../constants/app_colors.dart';
 
 class SwipeScreen extends StatelessWidget {
   final List<User> potentialMatches;
@@ -36,177 +37,190 @@ class SwipeScreen extends StatelessWidget {
     required this.onResetAndReload,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
+@override
+Widget build(BuildContext context) {
+  final authProvider = Provider.of<AuthProvider>(context);
+  final user = authProvider.user;
 
-    if (isLoading && potentialMatches.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  if (isLoading && potentialMatches.isEmpty) {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 20),
+          Text(
+            'Loading profiles...',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  if (potentialMatches.isEmpty ||
+      currentCardIndex >= potentialMatches.length) {
+    return EmptyStateWidget(
+      onResetAndReload: onResetAndReload,
+      onLoadMore: onLoadMore,
+      onAgeFilterPressed: onAgeFilterPressed,
+    );
+  }
+
+  final currentUser = potentialMatches[currentCardIndex];
+
+  return Stack(
+    children: [
+      Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: AppColors.backgroundGradient.colors,
+          ),
+        ),
+      ),
+
+      Positioned(
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 140, // Increased from 85 to give more space at bottom
+        child: SwipeCard(
+          key: ValueKey(currentUser.id),
+          user: currentUser,
+          onSwipeLeft: onSwipeLeft,
+          onSwipeRight: onSwipeRight,
+          onProfileTap: onProfileDetailPressed,
+          showDistance: true,
+          isSmallCard: true,
+        ),
+      ),
+
+      if (user?.ageFilterEnabled ?? false)
+        Positioned(
+          top: 10,
+          left: 0,
+          right: 0,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            margin: EdgeInsets.symmetric(horizontal: 60),
+            decoration: BoxDecoration(
+              color: Colors.pink.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cake, color: Colors.white, size: 14),
+                SizedBox(width: 8),
+                Text(
+                  'Age filter: ${user!.minAgeFilter}-${user.maxAgeFilter}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+      if (!locationEnabled)
+        Positioned(
+          top: (user?.ageFilterEnabled ?? false) ? 40 : 10,
+          left: 0,
+          right: 0,
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            margin: EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.location_off, color: Colors.white, size: 14),
+                SizedBox(width: 8),
+                Text(
+                  'Location disabled - Showing all users',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+      // Adjust the position of action buttons to be ABOVE the nav bar
+      Positioned(
+        bottom: 70, // Positioned above where the nav bar will be
+        left: 0,
+        right: 0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 20),
-            Text(
-              'Loading profiles...',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ActionButton(
+              icon: Icons.close,
+              color: Colors.red,
+              onPressed: onSwipeLeft,
+              tooltip: 'Dislike',
+            ),
+            ActionButton(
+              icon: Icons.filter_alt,
+              color: Colors.purple,
+              onPressed: onAgeFilterPressed,
+              tooltip: 'Age Filter',
+            ),
+            ActionButton(
+              icon: Icons.info_outline,
+              color: Colors.orange,
+              onPressed: onProfileDetailPressed,
+              tooltip: 'Profile',
+            ),
+            ActionButton(
+              icon: Icons.favorite,
+              color: Colors.green,
+              onPressed: onSwipeRight,
+              tooltip: 'Like',
             ),
           ],
         ),
-      );
-    }
+      ),
 
-    if (potentialMatches.isEmpty || currentCardIndex >= potentialMatches.length) {
-      return EmptyStateWidget(
-        onResetAndReload: onResetAndReload,
-        onLoadMore: onLoadMore,
-        onAgeFilterPressed: onAgeFilterPressed,
-      );
-    }
-
-    final currentUser = potentialMatches[currentCardIndex];
-
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.pink[50]!, Colors.blue[50]!],
-            ),
-          ),
-        ),
-
+      if (showNavigationGuide)
         Positioned(
-          top: 50,
-          left: 16,
-          right: 16,
-          bottom: 120,
-          child: SwipeCard(
-            key: ValueKey(currentUser.id),
-            user: currentUser,
-            onSwipeLeft: onSwipeLeft,
-            onSwipeRight: onSwipeRight,
-            onProfileTap: onProfileDetailPressed,
-            showDistance: true,
-            isSmallCard: true,
-          ),
-        ),
-
-        if (user?.ageFilterEnabled ?? false)
-          Positioned(
-            top: 10,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              margin: EdgeInsets.symmetric(horizontal: 60),
-              decoration: BoxDecoration(
-                color: Colors.pink.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.cake, color: Colors.white, size: 14),
-                  SizedBox(width: 8),
-                  Text(
-                    'Age filter: ${user!.minAgeFilter}-${user.maxAgeFilter}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-        if (!locationEnabled)
-          Positioned(
-            top: (user?.ageFilterEnabled ?? false) ? 40 : 10,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              margin: EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.location_off, color: Colors.white, size: 14),
-                  SizedBox(width: 8),
-                  Text(
-                    'Location disabled - Showing all users',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-        Positioned(
-          bottom: 30,
+          bottom: 160, // Adjusted position
           left: 0,
           right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ActionButton(
-                icon: Icons.close,
-                color: Colors.red,
-                onPressed: onSwipeLeft,
-                tooltip: 'Dislike',
+          child: AnimatedOpacity(
+            duration: Duration(milliseconds: 300),
+            opacity: showNavigationGuide ? 1.0 : 0.0,
+            child: Container(
+              padding: EdgeInsets.all(12),
+              margin: EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
               ),
-              ActionButton(
-                icon: Icons.filter_alt,
-                color: Colors.purple,
-                onPressed: onAgeFilterPressed,
-                tooltip: 'Age Filter',
+              child: Text(
+                'Swipe left to pass, right to like',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              ActionButton(
-                icon: Icons.refresh,
-                color: Colors.blue,
-                onPressed: onRefreshLocation,
-                tooltip: 'Refresh',
-              ),
-              ActionButton(
-                icon: Icons.info_outline,
-                color: Colors.orange,
-                onPressed: onProfileDetailPressed,
-                tooltip: 'Profile',
-              ),
-              ActionButton(
-                icon: Icons.favorite,
-                color: Colors.green,
-                onPressed: onSwipeRight,
-                tooltip: 'Like',
-              ),
-            ],
-          ),
-        ),
-
-        if (showNavigationGuide)
-          Positioned(
-            bottom: 100,
-            left: 0,
-            right: 0,
-            child: AnimatedOpacity(
-              duration: Duration(milliseconds: 300),
-              opacity: showNavigationGuide ? 1.0 : 0.0,
             ),
           ),
-      ],
-    );
-  }
+        ),
+    ],
+  );
+}
 }

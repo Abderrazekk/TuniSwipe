@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'edit_profile.dart';
+import 'payment_screen.dart';
 import '../constants/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -13,8 +14,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = false;
+  // ignore: prefer_final_fields
   double _profilePhotoSize = 120.0;
-  bool _showFullBio = false;
+  String? _selectedPlan; // To track selected plan
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await authProvider.fetchCompleteProfile();
       } catch (error) {
+        // ignore: avoid_print
         print('Error loading complete profile: $error');
       } finally {
         setState(() {
@@ -63,6 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
+                      // ignore: deprecated_member_use
                       color: Colors.black.withOpacity(0.05),
                       blurRadius: 20,
                     ),
@@ -88,16 +92,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
-
           // Profile Content
           SliverList(
             delegate: SliverChildListDelegate([
               // Hero Profile Section
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(70),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primaryGradient.colors[1], AppColors.primaryGradient.colors[0]],
+                    colors: [
+                      AppColors.primaryGradient.colors[1],
+                      AppColors.primaryGradient.colors[0],
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -107,6 +113,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
+                      // ignore: deprecated_member_use
                       color: AppColors.primary.withOpacity(0.3),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
@@ -126,6 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: Colors.white, width: 4),
                             boxShadow: [
                               BoxShadow(
+                                // ignore: deprecated_member_use
                                 color: Colors.black.withOpacity(0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
@@ -240,6 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           borderRadius: BorderRadius.circular(50),
                           boxShadow: [
                             BoxShadow(
+                              // ignore: deprecated_member_use
                               color: Colors.black.withOpacity(0.1),
                               blurRadius: 10,
                             ),
@@ -271,287 +280,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               const SizedBox(height: 24),
-              // Bio Section
-              if (user?.bio != null && user!.bio.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
+
+              // Premium Features Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Section Title
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.stars_rounded,
+                          color: AppColors.accent,
+                          size: 24,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Go Premium',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Unlock exclusive features with premium subscription',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Premium Offers Row - Only Weekly and Monthly
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: AppColors.shadowMedium,
+                        border: Border.all(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.description_outlined,
-                                color: AppColors.secondary,
-                                size: 20,
+                            // Weekly Plan
+                            Expanded(
+                              child: _buildPlanCard(
+                                context,
+                                planType: 'Weekly',
+                                price: '\$2.99',
+                                period: 'week',
+                                isSelected: _selectedPlan == 'weekly',
+                                onTap: () {
+                                  setState(() {
+                                    _selectedPlan = 'weekly';
+                                  });
+                                  _navigateToPaymentScreen(
+                                    context,
+                                    plan: 'Weekly',
+                                    price: 2.99,
+                                    period: 'week',
+                                  );
+                                },
+                                color: AppColors.primaryLight,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'About Me',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                            const SizedBox(width: 16),
+
+                            // Monthly Plan (Featured)
+                            Expanded(
+                              child: _buildPlanCard(
+                                context,
+                                planType: 'Monthly',
+                                price: '\$9.99',
+                                period: 'month',
+                                isSelected: _selectedPlan == 'monthly',
+                                onTap: () {
+                                  setState(() {
+                                    _selectedPlan = 'monthly';
+                                  });
+                                  _navigateToPaymentScreen(
+                                    context,
+                                    plan: 'Monthly',
+                                    price: 9.99,
+                                    period: 'month',
+                                  );
+                                },
+                                color: AppColors.primary,
+                                isFeatured: true,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          user.bio,
-                          maxLines: _showFullBio ? null : 4,
-                          overflow: _showFullBio
-                              ? TextOverflow.visible
-                              : TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFF475569),
-                            height: 1.5,
-                          ),
-                        ),
-                        if (user.bio.length > 200)
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _showFullBio = !_showFullBio;
-                              });
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                _showFullBio ? 'Show less' : 'Read more',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-
-              const SizedBox(height: 16),
-
-              // Additional Info Cards
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    if (user?.school != null && user!.school.isNotEmpty)
-                      _buildInfoChip(
-                        icon: Icons.school_outlined,
-                        text: user.school,
-                        color: const Color(0xFF8B5CF6),
-                      ),
-                    if (user?.jobTitle != null && user!.jobTitle.isNotEmpty)
-                      _buildInfoChip(
-                        icon: Icons.work_outline,
-                        text: user.jobTitle,
-                        color: const Color(0xFF3B82F6),
-                      ),
-                    if (user?.company != null && user!.company.isNotEmpty)
-                      _buildInfoChip(
-                        icon: Icons.business_outlined,
-                        text: user.company,
-                        color: AppColors.accent,
-                      ),
-                    if (user?.topArtist != null && user!.topArtist.isNotEmpty)
-                      _buildInfoChip(
-                        icon: Icons.music_note_outlined,
-                        text: user.topArtist,
-                        color: AppColors.error,
-                      ),
-                    if (user?.height != null && user!.height! > 0)
-                      _buildInfoChip(
-                        icon: Icons.height_outlined,
-                        text: '${user.height} cm',
-                        color: AppColors.secondary,
-                      ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 24),
-
-              // Interests Section
-              if (user?.interests != null && user!.interests.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.tag_outlined,
-                                color: AppColors.accent,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Interests',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              '${user.interests.length}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: user.interests.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final interest = entry.value;
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: _getInterestColor(
-                                  index,
-                                ).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _getInterestColor(
-                                    index,
-                                  ).withOpacity(0.2),
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                child: Text(
-                                  interest,
-                                  style: TextStyle(
-                                    color: _getInterestColor(index),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 24),
-
-              // Photo Gallery Preview
-              if (user?.media != null && user!.media.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 16, left: 4),
-                        child: Text(
-                          'My Photos',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: user.media.length,
-                          itemBuilder: (context, index) {
-                            final media = user.media[index];
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                right: index < user.media.length - 1 ? 12 : 0,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.network(
-                                  'http://10.0.2.2:5000/uploads/${media.filename}',
-                                  width: 140,
-                                  height: 180,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 140,
-                                      height: 180,
-                                      color: const Color(0xFFF1F5F9),
-                                      child: const Icon(
-                                        Icons.photo_outlined,
-                                        color: Color(0xFFCBD5E1),
-                                        size: 40,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 40),
+              const SizedBox(height: 28),
 
               // Action Buttons
               Padding(
@@ -566,6 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
+                            // ignore: deprecated_member_use
                             color: Colors.black.withOpacity(0.05),
                             blurRadius: 10,
                           ),
@@ -606,7 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 70),
             ]),
           ),
         ],
@@ -614,29 +450,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String text,
+  Widget _buildPlanCard(
+    BuildContext context, {
+    required String planType,
+    required String price,
+    required String period,
+    required bool isSelected,
+    required VoidCallback onTap,
     required Color color,
+    bool isFeatured = false,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isFeatured ? color.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
+            // Featured Badge
+            if (isFeatured)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'MOST POPULAR',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            if (isFeatured) const SizedBox(height: 8),
+
+            // Plan Type
             Text(
-              text,
+              planType,
               style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isFeatured ? color : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Price
+            Text(
+              price,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
                 color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Period
+            Text(
+              '/$period',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textTertiary,
                 fontWeight: FontWeight.w500,
-                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Select Button
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isFeatured ? AppColors.shadowSmall : null,
+              ),
+              child: Center(
+                child: Text(
+                  'Select',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
@@ -645,25 +555,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _navigateToPaymentScreen(
+    BuildContext context, {
+    required String plan,
+    required double price,
+    required String period,
+  }) {
+    // Navigate to payment screen
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          plan: plan,
+          price: price,
+          period: period,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDefaultAvatar() {
     return Container(
+      // ignore: deprecated_member_use
       color: Colors.white.withOpacity(0.1),
       child: const Center(
         child: Icon(Icons.person, size: 60, color: Colors.white70),
       ),
     );
-  }
-
-  Color _getInterestColor(int index) {
-    final colors = [
-      AppColors.primary, // Purple
-      AppColors.secondary, // Green
-      AppColors.accent, // Amber
-      AppColors.error, // Red
-      const Color(0xFF3B82F6), // Blue
-      const Color(0xFF8B5CF6), // Violet
-    ];
-    return colors[index % colors.length];
   }
 
   // Logout confirmation dialog
@@ -706,7 +623,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const Text(
                   'Are you sure you want to logout from your account?',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Row(

@@ -17,6 +17,7 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _user != null;
   bool get isInitialized =>
       _isInitialized; // Add getter for initialization status
+  String? get token => _user?.token;
 
   AuthProvider() {
     _initialize(); // Change from _loadUser() to _initialize()

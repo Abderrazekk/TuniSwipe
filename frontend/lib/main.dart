@@ -13,6 +13,7 @@ import 'screens/profile_screen.dart';
 import 'screens/edit_profile.dart';
 import 'models/user.dart';
 import 'services/location_service.dart';
+import 'providers/admin_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -48,6 +48,7 @@ dependencies:
   location: ^8.0.1
   url_launcher: ^6.1.14 # ADD THIS for opening settings
   app_settings: ^5.0.3 # ADD THIS for opening settings
+  fl_chart: ^1.1.1
 
 dev_dependencies:
   flutter_test:

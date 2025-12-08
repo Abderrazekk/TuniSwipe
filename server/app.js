@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/auth");
+const adminAnalyticsRoutes = require("./routes/adminAnalytics");
+const chatRoutes = require("./routes/chat");
+const matchesRoutes = require("./routes/matches");
 const path = require("path");
 
 // Create Express app
@@ -108,6 +111,9 @@ app.get("/api/health", (req, res) => {
 
 // API routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminAnalyticsRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/matches", matchesRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
